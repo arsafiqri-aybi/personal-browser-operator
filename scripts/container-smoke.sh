@@ -57,12 +57,20 @@ test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:${PUBL
 test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PUBLIC_PORT}/console")" = "401"
 curl -fsS "http://127.0.0.1:${PUBLIC_PORT}/novnc/vnc.html" >/dev/null
 
+set +e
 REMOTE_OUTPUT="$(
   PBO_REMOTE_URL="http://127.0.0.1:${PUBLIC_PORT}" \
   PBO_MCP_TOKEN="$MCP_TOKEN" \
-  npm -w @pbo/operator-runtime run --silent test:remote-container
+  npm -w @pbo/operator-runtime run --silent test:remote-container 2>&1
 )"
+REMOTE_STATUS=$?
+set -e
 echo "$REMOTE_OUTPUT"
+if [ "$REMOTE_STATUS" -ne 0 ]; then
+  echo "remote MCP smoke failed with status $REMOTE_STATUS" >&2
+  docker logs "$NAME" || true
+  exit "$REMOTE_STATUS"
+fi
 TASK_ID="$(printf '%s\n' "$REMOTE_OUTPUT" | sed -n 's/^PBO_TASK_ID=//p' | tail -n 1)"
 test -n "$TASK_ID"
 
