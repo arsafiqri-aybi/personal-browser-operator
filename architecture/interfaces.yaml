@@ -1,0 +1,22 @@
+schema_version: "1.0.0"
+interfaces:
+  - id: IF-MCP-TASK
+    producer: PBO-01
+    consumer: PBO-02
+    contract: contracts/task.schema.json
+  - id: IF-OBSERVATION
+    producer: PBO-06
+    consumer: [PBO-07, PBO-11, PBO-15]
+    contract: contracts/observation.schema.json
+  - id: IF-ACTION
+    producer: PBO-09
+    consumer: PBO-10
+    contract: contracts/action.schema.json
+  - id: IF-VERIFY
+    producer: PBO-11
+    consumer: [PBO-08, PBO-12, PBO-15]
+    contract: contracts/verification.schema.json
+  - id: IF-CHECKPOINT
+    producer: PBO-18
+    consumer: [PBO-08, PBO-12]
+    contract: contracts/checkpoint.schema.json

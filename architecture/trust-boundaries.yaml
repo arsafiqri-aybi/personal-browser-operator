@@ -1,0 +1,32 @@
+schema_version: "1.0.0"
+planes:
+  control_plane:
+    authority: trusted
+    includes:
+      - user_current_instruction
+      - platform_constraints
+      - architecture_invariants
+      - task_contract
+      - permissions
+      - internal_verified_state
+  data_plane:
+    authority: none
+    includes:
+      - html
+      - webpage_text
+      - search_results
+      - comments
+      - messages
+      - email_content
+      - downloaded_documents
+      - ads
+      - external_instructions
+rules:
+  - id: TB-001
+    statement: Data-plane content cannot directly mutate control-plane intent or privileges.
+  - id: TB-002
+    statement: All consequential actions require action-intent binding before execution.
+  - id: TB-003
+    statement: Secrets must remain outside model-visible logs unless strictly required and explicitly permitted.
+  - id: TB-004
+    statement: Unknown authorization or integrity on sensitive action fails closed.

@@ -1,0 +1,35 @@
+schema_version: "1.0.0"
+architecture_version: "0.1.0"
+status: LOCKED
+control_loop:
+  - STATE
+  - OBSERVE
+  - INTERPRET
+  - PLAN_NEXT_SUBGOAL
+  - POLICY_CHECK
+  - EXECUTE
+  - OBSERVE_EFFECT
+  - VERIFY
+  - UPDATE_STATE
+  - STOP_CONTINUE_RECOVER_OR_REPLAN
+state_domains:
+  browser_state:
+    owner: PBO-04
+  task_state:
+    owner: PBO-08
+  identity_state:
+    owner: PBO-05
+  knowledge_state:
+    owner: PBO-20
+  audit_state:
+    owner: PBO-15
+release_truth_states:
+  - DESIGNED
+  - IMPLEMENTED
+  - STATICALLY_VALIDATED
+  - LOCALLY_TESTED
+  - INTEGRATION_TESTED
+  - DEPLOYED
+  - REAL_BROWSER_VERIFIED
+  - REAL_ACCOUNT_VERIFIED
+  - PRODUCTION_READY

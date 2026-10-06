@@ -1,0 +1,36 @@
+schema_version: "1.0.0"
+nodes:
+  PBO-01: []
+  PBO-02: [PBO-01]
+  PBO-03: [PBO-02]
+  PBO-04: [PBO-03]
+  PBO-05: [PBO-04]
+  PBO-06: [PBO-04]
+  PBO-07: [PBO-06]
+  PBO-08: [PBO-02, PBO-03]
+  PBO-09: [PBO-02, PBO-05, PBO-08]
+  PBO-10: [PBO-04, PBO-07, PBO-09]
+  PBO-11: [PBO-06, PBO-08, PBO-10]
+  PBO-12: [PBO-10, PBO-11]
+  PBO-13: [PBO-01, PBO-09, PBO-10, PBO-12]
+  PBO-14: [PBO-10]
+  PBO-15: [PBO-02, PBO-03]
+  PBO-16: [PBO-03, PBO-04, PBO-14, PBO-15]
+  PBO-17: [PBO-03, PBO-08]
+  PBO-18: [PBO-05, PBO-08, PBO-10, PBO-15, PBO-17]
+  PBO-19: [PBO-01, PBO-15, PBO-18]
+  PBO-20: [PBO-01, PBO-02, PBO-04, PBO-05, PBO-06, PBO-07, PBO-08, PBO-09, PBO-10, PBO-11, PBO-12, PBO-13, PBO-14, PBO-15, PBO-16, PBO-17, PBO-18, PBO-19]
+critical_path:
+  - PBO-01
+  - PBO-02
+  - PBO-04
+  - PBO-06
+  - PBO-07
+  - PBO-08
+  - PBO-09
+  - PBO-10
+  - PBO-11
+  - PBO-12
+  - PBO-13
+  - PBO-18
+  - PBO-20

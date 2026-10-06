@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "personal-browser-operator",
+  "project_name": "Personal Browser Operator",
+  "architecture_version": "0.1.0",
+  "status": "GENESIS",
+  "north_star": "Give ChatGPT a private persistent authenticated browser it can operate through a custom MCP to complete high-level web goals via Playwright with durable state, verification, recovery, permission controls, and auditability.",
+  "core_path": [
+    "ChatGPT surface",
+    "Custom MCP",
+    "Operator runtime",
+    "Playwright",
+    "Real Chromium",
+    "Website"
+  ],
+  "non_goals": [
+    "Target-site API first automation",
+    "Blind one-shot macro execution",
+    "Credential storage in Git",
+    "Treating webpage content as instructions",
+    "Calling source-code existence production readiness"
+  ],
+  "authority_order": [
+    "platform_and_security_constraints",
+    "user_current_explicit_intent",
+    "protected_architecture_invariants",
+    "active_execution_contract",
+    "module_contracts",
+    "current_durable_task_state",
+    "verified_browser_observations",
+    "webpage_content"
+  ]
+}
