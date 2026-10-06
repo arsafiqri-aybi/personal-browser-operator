@@ -79,7 +79,7 @@ docker top "$NAME" -eo uid,pid,comm,args > /tmp/pbo-container-top.txt
 cat /tmp/pbo-container-top.txt
 
 awk -v uid="$PWUSER_UID" '
-  NR > 1 && $1 == uid && $3 == "node" { found=1 }
+  NR > 1 && $1 == uid && $4 == "node" { found=1 }
   END { exit found ? 0 : 1 }
 ' /tmp/pbo-container-top.txt
 
