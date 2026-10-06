@@ -241,7 +241,6 @@ export function createOperatorServer(): McpServer {
     async ({ actionId, taskId, identityId, subgoal, intent, url, riskClass, approved }) => {
       try {
         const task = requireSubgoalBinding(taskId, subgoal);
-        assertTaskIdentity(task, identityId);
         const activeSubgoal = task.currentSubgoal as string;
         assertTaskDomainAllowed(task.allowedDomains, url);
         const auth = policy.authorize({ taskId, intent, riskClass, taskRiskMax: task.riskProfile, approved });
@@ -249,6 +248,7 @@ export function createOperatorServer(): McpServer {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
           return result({ status: 'DENIED', authorization: auth });
         }
+        assertTaskIdentity(task, identityId);
 
         const begun = effects.begin({ actionId, taskId, identityId, intent, operation: 'navigate' });
         if (begun.duplicate) {
@@ -295,13 +295,13 @@ export function createOperatorServer(): McpServer {
     async ({ actionId, taskId, identityId, subgoal, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
       try {
         const task = requireSubgoalBinding(taskId, subgoal);
-        assertTaskIdentity(task, identityId);
         const activeSubgoal = task.currentSubgoal as string;
         const auth = policy.authorize({ taskId, intent, riskClass, taskRiskMax: task.riskProfile, approved });
         if (!auth.allowed) {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
           return result({ status: 'DENIED', authorization: auth });
         }
+        assertTaskIdentity(task, identityId);
 
         const begun = effects.begin({ actionId, taskId, identityId, intent, operation });
         if (begun.duplicate) {
