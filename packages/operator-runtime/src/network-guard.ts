@@ -7,12 +7,16 @@ const ttlMs = 30_000;
 function isPrivateIPv4(address: string): boolean {
   const parts = address.split('.').map(Number);
   if (parts.length !== 4 || parts.some(n => !Number.isInteger(n) || n < 0 || n > 255)) return false;
-  if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0) return true;
-  if (parts[0] === 169 && parts[1] === 254) return true;
-  if (parts[0] === 172 && parts[1] !== undefined && parts[1] >= 16 && parts[1] <= 31) return true;
-  if (parts[0] === 192 && parts[1] === 168) return true;
-  if (parts[0] === 100 && parts[1] !== undefined && parts[1] >= 64 && parts[1] <= 127) return true;
-  if (parts[0] >= 224) return true;
+
+  const [a, b, c, d] = parts;
+  if (a === undefined || b === undefined || c === undefined || d === undefined) return false;
+
+  if (a === 10 || a === 127 || a === 0) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true;
+  if (a >= 224) return true;
   return false;
 }
 

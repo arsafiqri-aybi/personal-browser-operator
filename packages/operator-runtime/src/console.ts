@@ -26,7 +26,8 @@ function authorized(req: http.IncomingMessage): boolean {
   const queryToken = url.searchParams.get('token') || '';
   const auth = req.headers.authorization || '';
   const bearer = auth.startsWith('Bearer ') ? auth.slice('Bearer '.length) : '';
-  return (queryToken && safeEqual(queryToken, token)) || (bearer && safeEqual(bearer, token));
+  return (queryToken.length > 0 && safeEqual(queryToken, token)) ||
+    (bearer.length > 0 && safeEqual(bearer, token));
 }
 
 function json(res: http.ServerResponse, status: number, value: unknown): void {

@@ -110,9 +110,12 @@ export class BrowserManager {
         let current: Element | null = el;
         while (current && current !== document.documentElement) {
           let part = current.tagName.toLowerCase();
-          const parent = current.parentElement;
+          const currentTag = current.tagName;
+          const parent: Element | null = current.parentElement;
           if (parent) {
-            const siblings = Array.from(parent.children).filter(x => x.tagName === current!.tagName);
+            const siblings: Element[] = Array.from(parent.children).filter(
+              (x: Element) => x.tagName === currentTag
+            );
             if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
           }
           parts.unshift(part);
