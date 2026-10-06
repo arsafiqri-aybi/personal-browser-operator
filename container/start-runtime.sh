@@ -10,6 +10,11 @@ set -euo pipefail
 PBO_PUBLIC_PORT="${PORT:-${PBO_PUBLIC_PORT:-8080}}"
 : "${DISPLAY:=:99}"
 
+if [[ "$(id -u)" -ne 0 ]]; then
+  echo "Container bootstrap must start as root so persistent volume ownership can be prepared." >&2
+  exit 1
+fi
+
 if [[ -z "${PBO_MCP_TOKEN:-}" ]]; then
   echo "PBO_MCP_TOKEN is required in container runtime" >&2
   exit 1
@@ -28,18 +33,27 @@ mkdir -p \
   "$PBO_DATA_DIR/vnc" \
   /tmp/nginx-client-body \
   /tmp/nginx-proxy
+chown pwuser:pwuser \
+  "$PBO_DATA_DIR" \
+  "$PBO_DATA_DIR/vnc" \
+  /tmp/nginx-client-body \
+  /tmp/nginx-proxy
 chmod 700 "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
 
-x11vnc -storepasswd "$PBO_VNC_PASSWORD" "$PBO_DATA_DIR/vnc/passwd" >/dev/null
+export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS PBO_PUBLIC_PORT
+export PBO_NOVNC_PUBLIC_URL="${PBO_NOVNC_PUBLIC_URL:-/novnc/vnc.html?autoconnect=true&resize=scale}"
+export HOME=/home/pwuser
+
+gosu pwuser x11vnc -storepasswd "$PBO_VNC_PASSWORD" "$PBO_DATA_DIR/vnc/passwd" >/dev/null
 chmod 600 "$PBO_DATA_DIR/vnc/passwd"
 
-Xvfb "$DISPLAY" -screen 0 1440x960x24 -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
+gosu pwuser Xvfb "$DISPLAY" -screen 0 1440x960x24 -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
 XVFB_PID=$!
 
-fluxbox -display "$DISPLAY" >/tmp/fluxbox.log 2>&1 &
+gosu pwuser fluxbox -display "$DISPLAY" >/tmp/fluxbox.log 2>&1 &
 FLUXBOX_PID=$!
 
-x11vnc \
+gosu pwuser x11vnc \
   -display "$DISPLAY" \
   -rfbauth "$PBO_DATA_DIR/vnc/passwd" \
   -rfbport 5900 \
@@ -50,27 +64,25 @@ x11vnc \
   >/tmp/x11vnc.log 2>&1 &
 VNC_PID=$!
 
-websockify \
+gosu pwuser websockify \
   --web=/usr/share/novnc \
   127.0.0.1:6080 \
   127.0.0.1:5900 \
   >/tmp/novnc.log 2>&1 &
 NOVNC_PID=$!
 
-export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS PBO_PUBLIC_PORT
-export PBO_NOVNC_PUBLIC_URL="${PBO_NOVNC_PUBLIC_URL:-/novnc/vnc.html?autoconnect=true&resize=scale}"
-
-node /app/packages/operator-runtime/dist/http.js &
+gosu pwuser node /app/packages/operator-runtime/dist/http.js &
 MCP_PID=$!
 
-node /app/packages/operator-runtime/dist/console.js &
+gosu pwuser node /app/packages/operator-runtime/dist/console.js &
 CONSOLE_PID=$!
 
 envsubst '${PBO_PUBLIC_PORT}' \
   < /app/container/nginx.conf.template \
   > /tmp/nginx.conf
+chown pwuser:pwuser /tmp/nginx.conf
 
-nginx -c /tmp/nginx.conf -g 'daemon off;' &
+gosu pwuser nginx -c /tmp/nginx.conf -g 'daemon off;' &
 NGINX_PID=$!
 
 cleanup() {

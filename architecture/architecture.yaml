@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-architecture_version: "0.3.0"
+architecture_version: "0.3.1"
 status: LOCKED
 control_loop:
   - STATE
@@ -34,6 +34,7 @@ runtime_host:
   public_ingress: single_authenticated_https_origin
   internal_services: loopback_only
   persistent_mount: /data
+  privilege_model: root_bootstrap_nonroot_workload
   provider_dependency: none
 public_routes:
   /mcp: mcp_gateway

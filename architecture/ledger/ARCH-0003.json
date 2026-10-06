@@ -1,0 +1,26 @@
+{
+  "entry_id": "ARCH-0003",
+  "architecture_version": "0.3.1",
+  "previous_entry_hash": "ff3f659c87e4ff289b9798d385702f1be92197642749f4068069f8cfeba58cc4",
+  "reason": "Refine architecture governance so historical ledger hashes remain immutable while current artifacts validate against the head, and lock root-bootstrap/non-root-workload volume handling for persistent hosts.",
+  "affected_modules": ["PBO-04","PBO-05","PBO-13","PBO-14","PBO-16","PBO-17","PBO-18","PBO-19","PBO-20"],
+  "affected_contracts": ["architecture_ledger_validation","runtime_privilege_model","persistent_mount"],
+  "protected_invariants_changed": false,
+  "required_tests": ["full-ledger-chain","head-artifact-hashes","persistent-volume-write","nonroot-browser-process","single-public-port"],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "architecture/architecture.yaml": "685777865168f5fc8cbf8c4a169536f788249c0532f758bba5fbb5514f981bde",
+    "architecture/adr/ADR-0005-ledger-head-artifact-validation.md": "23a11563ad6d88adf9a0c5cb25785c723af02d015dd51b14e44d6c719b3fb77b",
+    "architecture/adr/ADR-0006-root-bootstrap-nonroot-workload.md": "bc5a0215334698663b7b5afd80b2201a930e74bb56ba5ce2c2c6311363ebf448",
+    "scripts/validate-architecture.mjs": "045dedff251192a153096531a7e8d689a1e89dfa13ad064696ca7d95b4909a54",
+    "container/start-runtime.sh": "efea9b7db2daa6732aa0cca515a40e94fd5e6aa9bb41f50c8a02cd635e665b3a",
+    "Dockerfile": "eaf81e7533d01a83c03f24e0f374ddc65355ee0b8c84f26d7fcd028984d1c680",
+    "container/nginx.conf.template": "ac2a4161a86ad95db1bd86b1199abfc9c66dd3cd91bd93e4630ef3ea6318e8f8",
+    "docker-compose.yml": "a6f126f349bc53d52413ec652e97d7529ecbbd2629ca72bbd8dc1f2ffd9b3a09"
+  },
+  "evidence": {
+    "railway_volume_behavior": "volumes_mount_as_root_for_nonroot_images",
+    "mitigation": "root_bootstrap_then_gosu_pwuser_for_all_long_running_workloads"
+  },
+  "entry_hash": "489cb92998e22dc905c3110bfbda4bdd224ed2ee53becaa4c21f1ec4ef564c77"
+}

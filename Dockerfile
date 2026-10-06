@@ -11,6 +11,7 @@ RUN apt-get update \
      websockify \
      nginx \
      gettext-base \
+     gosu \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -40,6 +41,6 @@ VOLUME ["/data"]
 
 EXPOSE 8080
 
-USER pwuser
+USER root
 
 CMD ["/app/container/start-runtime.sh"]

@@ -56,16 +56,6 @@ for (const name of ledgerFiles) {
     throw new Error(`${name} previous_entry_hash does not match chain head`);
   }
 
-  if (entry.artifact_hash_mode === 'raw_utf8') {
-    for (const [artifactPath, expectedHash] of Object.entries(entry.artifact_hashes || {})) {
-      if (!fs.existsSync(artifactPath)) throw new Error(`${name} missing artifact ${artifactPath}`);
-      const actualHash = sha(read(artifactPath));
-      if (actualHash !== expectedHash) {
-        throw new Error(`${name} artifact hash mismatch for ${artifactPath}`);
-      }
-    }
-  }
-
   previousHash = actualEntryHash;
   lastEntry = entry;
 }
@@ -76,6 +66,16 @@ if (lastEntry.entry_id !== lock.ledger_head || previousHash !== lock.ledger_head
 }
 if (lastEntry.architecture_version !== lock.architecture_version) {
   throw new Error('Architecture version mismatch between ledger head and lock');
+}
+
+if (lastEntry.artifact_hash_mode === 'raw_utf8') {
+  for (const [artifactPath, expectedHash] of Object.entries(lastEntry.artifact_hashes || {})) {
+    if (!fs.existsSync(artifactPath)) throw new Error(`Ledger head missing artifact ${artifactPath}`);
+    const actualHash = sha(read(artifactPath));
+    if (actualHash !== expectedHash) {
+      throw new Error(`Ledger head artifact hash mismatch for ${artifactPath}`);
+    }
+  }
 }
 
 const architecture = YAML.parse(read('architecture/architecture.yaml'));
@@ -113,6 +113,7 @@ console.log(JSON.stringify({
   ledgerEntries: ledgerFiles.length,
   ledgerHead: lock.ledger_head,
   ledgerHeadHash: previousHash,
+  headArtifactsVerified: Object.keys(lastEntry.artifact_hashes || {}).length,
   invariants: ids.length,
   modules: Object.keys(graph).length
 }, null, 2));
