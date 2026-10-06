@@ -3,7 +3,9 @@
   "version": "0.3.1",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "validate:architecture": "node scripts/validate-architecture.mjs",
     "validate:chatgpt": "node scripts/validate-chatgpt-integration.mjs",
@@ -14,7 +16,9 @@
     "test:browser": "npm -w @pbo/operator-runtime run test:browser && npm run test:container",
     "start": "npm -w @pbo/operator-runtime run start",
     "start:http": "npm -w @pbo/operator-runtime run start:http",
-    "test": "npm run validate:architecture && npm run validate:chatgpt && npm run typecheck && npm run test:unit && npm run test:contract"
+    "test": "npm run validate:architecture && npm run validate:chatgpt && npm run validate:deployment && npm run typecheck && npm run test:unit && npm run test:contract",
+    "validate:deployment": "node scripts/validate-deployment-contract.mjs",
+    "verify:public-host": "node scripts/verify-public-host.mjs"
   },
   "devDependencies": {
     "yaml": "2.8.1"

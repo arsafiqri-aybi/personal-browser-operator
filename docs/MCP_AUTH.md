@@ -56,3 +56,13 @@ Website passwords, OTPs, passkeys, and CAPTCHAs continue to use protected same-b
 Do not embed a long-lived MCP bearer token into `plugin.json`, `mcp.json`, URLs, Git, or ChatGPT-visible instructions.
 
 For a production ChatGPT connection, prefer OAuth resource-server mode once the chosen external identity provider has been configured and verified.
+
+## ChatGPT connection durability
+
+For a ChatGPT OAuth connection, the external authorization server must support a renewable authorization session. Current OpenAI guidance recommends refresh tokens and, for OpenID Connect, advertising/requesting `offline_access` (or the provider-equivalent capability) in discovery metadata.
+
+PBO remains only the protected resource server. It does not mint user OAuth tokens and must not become a credential store merely to simplify deployment.
+
+The public ChatGPT MCP endpoint is `https://<public-origin>/mcp`, and protected-resource metadata is `https://<public-origin>/.well-known/oauth-protected-resource/mcp`.
+
+Tool scanning or plugin packaging is not evidence of a usable connection until the remote HTTPS MCP endpoint and authorization flow have been exercised end-to-end.
