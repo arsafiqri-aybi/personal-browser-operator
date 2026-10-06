@@ -65,11 +65,21 @@ export async function verify(
   }
 
   if (expected.textVisible !== undefined) {
-    const visible = await session.page.getByText(expected.textVisible, { exact: false }).first().isVisible().catch(() => false);
+    const matches = session.page.getByText(expected.textVisible, { exact: false });
+    const count = await matches.count().catch(() => 0);
+    let visible = false;
+
+    for (let index = 0; index < count; index += 1) {
+      if (await matches.nth(index).isVisible().catch(() => false)) {
+        visible = true;
+        break;
+      }
+    }
+
     checks.push({
       kind: 'textVisible',
       expected: expected.textVisible,
-      observed: visible,
+      observed: { matched: count, anyVisible: visible },
       pass: visible
     });
   }
