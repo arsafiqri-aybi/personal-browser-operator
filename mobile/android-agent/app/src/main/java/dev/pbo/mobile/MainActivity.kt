@@ -1,5 +1,6 @@
 package dev.pbo.mobile
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -9,9 +10,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("pbo_mobile", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val title = TextView(this).apply {
-            text = "Personal Browser Operator — Mobile Host"
+            text = "Personal Browser Operator - Mobile Host"
             textSize = 20f
         }
 
