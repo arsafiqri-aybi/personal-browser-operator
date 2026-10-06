@@ -6,6 +6,12 @@ import test from 'node:test';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 
+function textPayload(result: any): any {
+  const block = result.content?.find((item: any) => item.type === 'text');
+  if (!block || typeof block.text !== 'string') throw new Error('MCP_TEXT_RESULT_REQUIRED');
+  return JSON.parse(block.text);
+}
+
 test('MCP contract exposes task, effect and verification tools', async () => {
   process.env.PBO_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'pbo-mcp-'));
 
