@@ -464,18 +464,27 @@ export function createOperatorServer(): McpServer {
   server.registerTool(
     'browser_task_complete',
     {
-      description: 'Mark a browser task COMPLETE only when a persisted verification result is PASS for the same task.',
+      description: 'Mark a browser task COMPLETE only when a persisted PASS verification exists and every acceptance criterion is linked to durable task evidence.',
       inputSchema: z.object({
         taskId: z.string().min(1),
-        verificationId: z.string().min(1)
+        verificationId: z.string().min(1),
+        criterionEvidence: z.array(z.object({
+          criterion: z.string().min(1).max(500),
+          evidenceRefs: z.array(z.string().min(1).max(300)).min(1).max(20)
+        })).max(30).default([])
       })
     },
-    async ({ taskId, verificationId }) => {
+    async ({ taskId, verificationId, criterionEvidence }) => {
       try {
         const verification = verifications.get(verificationId);
         if (verification.taskId !== taskId) throw new Error('VERIFICATION_TASK_MISMATCH');
-        const task = tasks.complete(taskId, verification);
-        audit.append({ eventType: 'TASK_COMPLETED', taskId, summary: 'Task completed from PASS verification.', evidenceRefs: [verificationId] });
+        const task = tasks.complete(taskId, verification, criterionEvidence);
+        audit.append({
+          eventType: 'TASK_COMPLETED',
+          taskId,
+          summary: `Task completed from PASS verification with ${task.acceptanceEvidence.length}/${task.acceptanceCriteria.length} acceptance criteria linked to evidence.`,
+          evidenceRefs: [...new Set([verificationId, ...task.acceptanceEvidence.flatMap(item => item.evidenceRefs)])]
+        });
         return result(task);
       } catch (e) {
         return error(e);

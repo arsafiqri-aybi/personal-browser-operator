@@ -140,3 +140,61 @@ test('task identity cannot be silently rebound', () => {
   assert.equal(store.get(task.taskId).browserIdentity, 'identity-a');
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+
+test('task completion requires evidence coverage for every acceptance criterion', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pbo-acceptance-'));
+  process.env.PBO_DATA_DIR = root;
+
+  const store = new TaskStore();
+  const task = store.start(
+    'Complete a task with evidence-backed acceptance',
+    undefined,
+    [],
+    [],
+    'R2',
+    ['Title verified', 'Visible result verified']
+  );
+
+  store.addEvidence(task.taskId, 'OBS-title');
+  store.addEvidence(task.taskId, 'OBS-result');
+
+  assert.throws(
+    () => store.complete(
+      task.taskId,
+      { verificationId: 'VERIFY-pass', status: 'PASS' },
+      [{ criterion: 'Title verified', evidenceRefs: ['OBS-title'] }]
+    ),
+    /COMPLETION_ACCEPTANCE_CRITERIA_UNCOVERED/
+  );
+
+  assert.throws(
+    () => store.complete(
+      task.taskId,
+      { verificationId: 'VERIFY-pass', status: 'PASS' },
+      [
+        { criterion: 'Title verified', evidenceRefs: ['OBS-title'] },
+        { criterion: 'Visible result verified', evidenceRefs: ['OBS-missing'] }
+      ]
+    ),
+    /COMPLETION_EVIDENCE_NOT_IN_TASK/
+  );
+
+  const completed = store.complete(
+    task.taskId,
+    { verificationId: 'VERIFY-pass', status: 'PASS' },
+    [
+      { criterion: 'Title verified', evidenceRefs: ['OBS-title'] },
+      { criterion: 'Visible result verified', evidenceRefs: ['OBS-result', 'VERIFY-pass'] }
+    ]
+  );
+
+  assert.equal(completed.status, 'COMPLETE');
+  assert.equal(completed.acceptanceEvidence.length, 2);
+  assert.ok(completed.evidenceRefs.includes('VERIFY-pass'));
+
+  const restored = new TaskStore().get(task.taskId);
+  assert.deepEqual(restored.acceptanceEvidence, completed.acceptanceEvidence);
+
+  fs.rmSync(root, { recursive: true, force: true });
+});

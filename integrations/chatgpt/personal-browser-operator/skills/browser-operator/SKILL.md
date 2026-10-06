@@ -94,7 +94,7 @@ After actions that change state:
 - bind `actionId` when reconciling a mutation;
 - trust `VERIFIED_PASS`, not assumptions from click success.
 
-Use `browser_task_complete` only when persisted PASS verification supports completion.
+Use `browser_task_complete` only when persisted PASS verification supports completion. If the task has `acceptanceCriteria`, provide exact criterion-to-evidence mappings for every criterion. Evidence refs must already belong to the durable task (the completion verification may also be referenced). This is coverage/provenance, not permission to invent semantic proof.
 
 ## Unknown effects and recovery
 

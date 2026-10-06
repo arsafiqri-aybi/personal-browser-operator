@@ -7,6 +7,11 @@ export type TaskStatus =
   | 'FAILED'
   | 'COMPLETE';
 
+export interface AcceptanceCriterionEvidence {
+  criterion: string;
+  evidenceRefs: string[];
+}
+
 export interface TaskState {
   taskId: string;
   revision: number;
@@ -16,6 +21,7 @@ export interface TaskState {
   allowedDomains: string[];
   riskProfile: RiskClass;
   acceptanceCriteria: string[];
+  acceptanceEvidence: AcceptanceCriterionEvidence[];
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { RiskClass, TaskState, TaskStatus } from './types.js';
+import type { AcceptanceCriterionEvidence, RiskClass, TaskState, TaskStatus } from './types.js';
 
 function dataRoot(): string {
   return process.env.PBO_DATA_DIR || path.resolve('runtime-data');
@@ -52,7 +52,11 @@ export class TaskStore {
           protectedConstraints: cleanList(raw.protectedConstraints ?? []),
           allowedDomains: (raw.allowedDomains ?? []).map(normalizeDomain),
           riskProfile: raw.riskProfile ?? 'R2',
-          acceptanceCriteria: cleanList(raw.acceptanceCriteria ?? [])
+          acceptanceCriteria: cleanList(raw.acceptanceCriteria ?? []),
+          acceptanceEvidence: (raw.acceptanceEvidence ?? []).map(entry => ({
+            criterion: String(entry.criterion).trim(),
+            evidenceRefs: cleanList(entry.evidenceRefs ?? [])
+          })).filter(entry => entry.criterion.length > 0)
         } as TaskState;
         this.tasks.set(parsed.taskId, parsed);
       } catch {
@@ -96,6 +100,7 @@ export class TaskStore {
       allowedDomains: cleanList(allowedDomains).map(normalizeDomain),
       riskProfile,
       acceptanceCriteria: cleanList(acceptanceCriteria),
+      acceptanceEvidence: [],
       status: 'ACTIVE',
       createdAt: now,
       updatedAt: now,
@@ -188,12 +193,41 @@ export class TaskStore {
     });
   }
 
-  complete(taskId: string, verification: { verificationId: string; status: 'PASS' | 'FAIL' | 'UNCERTAIN' }): TaskState {
+  complete(
+    taskId: string,
+    verification: { verificationId: string; status: 'PASS' | 'FAIL' | 'UNCERTAIN' },
+    criterionEvidence: AcceptanceCriterionEvidence[] = []
+  ): TaskState {
     if (verification.status !== 'PASS') {
       throw new Error('COMPLETION_REQUIRES_PASS_VERIFICATION');
     }
+
     return this.mutate(taskId, task => {
+      const availableEvidence = new Set(task.evidenceRefs);
+      availableEvidence.add(verification.verificationId);
+
+      const normalized: AcceptanceCriterionEvidence[] = [];
+      const seenCriteria = new Set<string>();
+
+      for (const entry of criterionEvidence) {
+        const criterion = entry.criterion.trim();
+        const evidenceRefs = cleanList(entry.evidenceRefs);
+        if (!criterion) throw new Error('COMPLETION_CRITERION_REQUIRED');
+        if (seenCriteria.has(criterion)) throw new Error('COMPLETION_DUPLICATE_CRITERION');
+        if (!task.acceptanceCriteria.includes(criterion)) throw new Error('COMPLETION_UNKNOWN_CRITERION');
+        if (evidenceRefs.length === 0) throw new Error('COMPLETION_CRITERION_EVIDENCE_REQUIRED');
+        if (evidenceRefs.some(ref => !availableEvidence.has(ref))) {
+          throw new Error('COMPLETION_EVIDENCE_NOT_IN_TASK');
+        }
+        seenCriteria.add(criterion);
+        normalized.push({ criterion, evidenceRefs });
+      }
+
+      const uncovered = task.acceptanceCriteria.filter(criterion => !seenCriteria.has(criterion));
+      if (uncovered.length > 0) throw new Error('COMPLETION_ACCEPTANCE_CRITERIA_UNCOVERED');
+
       task.status = 'COMPLETE';
+      task.acceptanceEvidence = normalized;
       task.completionVerificationId = verification.verificationId;
       if (!task.evidenceRefs.includes(verification.verificationId)) {
         task.evidenceRefs.push(verification.verificationId);
