@@ -84,6 +84,7 @@ try {
     assert.equal(observation.title, 'Example Domain');
     assert.equal(observation.trust, 'UNTRUSTED_WEB_DATA');
     assert.equal(observation.authority, 'NONE');
+    console.log('PBO_OBSERVATION=' + JSON.stringify({ url: observation.url, title: observation.title, ariaSnapshot: observation.ariaSnapshot }));
 
     const verified = textPayload(await client.callTool({
       name: 'browser_verify',
@@ -97,6 +98,7 @@ try {
         }
       }
     }));
+    console.log('PBO_VERIFICATION=' + JSON.stringify(verified));
     assert.equal(verified.verification.status, 'PASS');
     assert.equal(verified.effect.status, 'VERIFIED_PASS');
 
