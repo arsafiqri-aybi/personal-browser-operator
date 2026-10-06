@@ -18,7 +18,8 @@
     "start:http": "npm -w @pbo/operator-runtime run start:http",
     "test": "npm run validate:architecture && npm run validate:chatgpt && npm run validate:deployment && npm run typecheck && npm run test:unit && npm run test:contract",
     "validate:deployment": "node scripts/validate-deployment-contract.mjs",
-    "verify:public-host": "node scripts/verify-public-host.mjs"
+    "verify:public-host": "node scripts/verify-public-host.mjs",
+    "verify:oauth-provider": "node scripts/verify-oauth-provider.mjs"
   },
   "devDependencies": {
     "yaml": "2.8.1"
