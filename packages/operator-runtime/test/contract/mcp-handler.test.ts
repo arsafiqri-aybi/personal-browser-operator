@@ -72,6 +72,23 @@ test('MCP contract exposes task, effect and verification tools', async () => {
   assert.equal(resolvedPayload.currentSubgoal, null);
   assert.ok(resolvedPayload.completedSubgoals.includes('Inspect current page state'));
 
+  const stalePlanAction = await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      actionId: 'ACT-contract-stale-plan',
+      taskId: task.taskId,
+      identityId: 'identity-not-open',
+      subgoal: 'Inspect current page state',
+      intent: 'Attempt action after the planned subgoal has already been resolved',
+      url: 'https://example.com/',
+      riskClass: 'R1'
+    }
+  });
+  assert.equal(stalePlanAction.isError, true);
+  const staleText = stalePlanAction.content.find(block => block.type === 'text');
+  assert.ok(staleText && staleText.type === 'text');
+  assert.match(staleText.text, /ACTIVE_SUBGOAL_REQUIRED/);
+
   const state = await client.callTool({
     name: 'browser_task_state',
     arguments: { taskId: task.taskId }
