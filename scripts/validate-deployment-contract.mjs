@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 function read(file) {
   assert.ok(fs.existsSync(file), 'missing deployment artifact: ' + file);
@@ -72,6 +73,15 @@ for (const artifact of [
   'deploy/oauth.workos.env.example'
 ]) {
   assert.ok(fs.existsSync(artifact), 'missing OAuth/release artifact: ' + artifact);
+}
+for (const script of [
+  'scripts/verify-public-host.mjs',
+  'scripts/verify-oauth-provider.mjs',
+  'scripts/preflight-release.mjs',
+  'scripts/render-chatgpt-plugin.mjs'
+]) {
+  const checked = spawnSync(process.execPath, ['--check', script], { encoding: 'utf8' });
+  assert.equal(checked.status, 0, 'syntax-check failed for ' + script + ': ' + (checked.stderr || checked.stdout));
 }
 console.log(JSON.stringify({
   ok: true,
