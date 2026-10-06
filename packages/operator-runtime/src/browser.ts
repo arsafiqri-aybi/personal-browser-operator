@@ -104,32 +104,34 @@ export class BrowserManager {
     const rawElements = await page.locator(
       'a[href],button,input,textarea,select,[role="button"],[role="link"],[role="textbox"],[role="checkbox"],[role="radio"],[contenteditable="true"]'
     ).evaluateAll((elements) => {
-      function cssPath(el: Element): string {
-        if (el.id) return '#' + CSS.escape(el.id);
-        const parts: string[] = [];
-        let current: Element | null = el;
-        while (current && current !== document.documentElement) {
-          let part = current.tagName.toLowerCase();
-          const currentTag = current.tagName;
-          const parent: Element | null = current.parentElement;
-          if (parent) {
-            const siblings: Element[] = Array.from(parent.children).filter(
-              (x: Element) => x.tagName === currentTag
-            );
-            if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
-          }
-          parts.unshift(part);
-          current = parent;
-          if (parts.length >= 6) break;
-        }
-        return parts.join(' > ');
-      }
-
       return elements.slice(0, 250).flatMap((el) => {
         const html = el as HTMLElement;
         const style = getComputedStyle(html);
         const rect = html.getBoundingClientRect();
         if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return [];
+
+        let cssPathValue = '';
+        if (el.id) {
+          cssPathValue = '#' + CSS.escape(el.id);
+        } else {
+          const parts: string[] = [];
+          let current: Element | null = el;
+          while (current && current !== document.documentElement) {
+            let part = current.tagName.toLowerCase();
+            const currentTag = current.tagName;
+            const parent: Element | null = current.parentElement;
+            if (parent) {
+              const siblings: Element[] = Array.from(parent.children).filter(
+                (x: Element) => x.tagName === currentTag
+              );
+              if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
+            }
+            parts.unshift(part);
+            current = parent;
+            if (parts.length >= 6) break;
+          }
+          cssPathValue = parts.join(' > ');
+        }
 
         const tag = el.tagName.toLowerCase();
         const explicitRole = el.getAttribute('role');
@@ -158,7 +160,7 @@ export class BrowserManager {
           tag,
           placeholder,
           type: el.getAttribute('type'),
-          cssPath: cssPath(el)
+          cssPath: cssPathValue
         }];
       });
     });
@@ -214,7 +216,7 @@ export class BrowserManager {
     }
 
     if (descriptor.name) {
-      const candidate = session.page.getByText(descriptor.name, { exact: true });
+      const candidate = session.page.getByText(descriptor.name, { exact: true }).first();
       if (await candidate.count() === 1) return candidate;
     }
 
