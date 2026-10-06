@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      PBO_DATA_DIR: ${{ runner.temp }}/pbo-data
+      PBO_DATA_DIR: /tmp/pbo-data
       PBO_HEADLESS: "true"
       PBO_ALLOW_PRIVATE_NETWORKS: "false"
       PBO_AUTO_RISK: R2
