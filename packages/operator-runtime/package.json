@@ -1,6 +1,6 @@
 {
   "name": "@pbo/operator-runtime",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,11 @@
     "start": "tsx src/server.ts",
     "start:http": "tsx src/http.ts",
     "start:console": "tsx src/console.ts",
+    "start:mobile": "tsx src/mobile-server.ts",
+    "start:mobile:http": "tsx src/mobile-http.ts",
     "start:prod:http": "node dist/http.js",
     "start:prod:console": "node dist/console.js",
+    "start:prod:mobile:http": "node dist/mobile-http.js",
     "typecheck": "tsc --noEmit",
     "test:unit": "tsx --test test/unit/*.test.ts",
     "test:contract": "tsx --test test/contract/*.test.ts",

@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "personal-mobile-relay",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-06",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MOBILE_DEVICE_ROOM",
+        "class_name": "MobileDeviceRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["MobileDeviceRoom"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
