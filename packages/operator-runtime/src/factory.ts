@@ -187,6 +187,7 @@ export function createOperatorServer(): McpServer {
         }
         const opened = await browsers.open(identityId);
         const task = tasks.bindIdentity(taskId, identityId);
+        browsers.setAllowedDomains(identityId, task.allowedDomains);
         audit.append({ eventType: 'SESSION_OPENED', taskId, identityId, summary: 'Persistent browser identity opened.' });
         return result({ opened, task });
       } catch (e) {

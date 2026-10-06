@@ -13,6 +13,16 @@ test('real Playwright browser can observe, interact, re-observe and verify', asy
   process.env.PBO_ALLOW_PRIVATE_NETWORKS = 'true';
   process.env.PBO_HEADLESS = 'true';
 
+  let blockedHits = 0;
+  const blockedSite = http.createServer((_req, res) => {
+    blockedHits += 1;
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<!doctype html><title>Blocked destination</title><p>Should never be reached.</p>');
+  });
+  await new Promise<void>(resolve => blockedSite.listen(0, '127.0.0.1', resolve));
+  const blockedAddress = blockedSite.address();
+  assert.ok(blockedAddress && typeof blockedAddress === 'object');
+
   const site = http.createServer((_req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`<!doctype html>
@@ -21,6 +31,7 @@ test('real Playwright browser can observe, interact, re-observe and verify', asy
         <body>
           <div style="display:none">Done</div>
           <button id="go" onclick="document.getElementById('result').textContent='Done'">Run action</button>
+          <a id="cross" href="http://localhost:${blockedAddress.port}/blocked">Leave allowed domain</a>
           <div id="result">Pending</div>
         </body>
       </html>`);
@@ -33,6 +44,7 @@ test('real Playwright browser can observe, interact, re-observe and verify', asy
   const browsers = new BrowserManager();
   try {
     await browsers.open('browser-smoke');
+    browsers.setAllowedDomains('browser-smoke', ['127.0.0.1']);
     await browsers.navigate('browser-smoke', `http://127.0.0.1:${address.port}/`);
 
     const before = await browsers.observe('browser-smoke');
@@ -63,9 +75,26 @@ test('real Playwright browser can observe, interact, re-observe and verify', asy
     assert.equal(checked.status, 'PASS');
     const visibleCheck = checked.checks.find(x => x.kind === 'textVisible');
     assert.equal(visibleCheck?.pass, true);
+
+    const guarded = await browsers.observe('browser-smoke');
+    const crossDomain = guarded.interactiveElements.find(x => x.role === 'link' && x.name === 'Leave allowed domain');
+    assert.ok(crossDomain);
+
+    await assert.rejects(
+      () => browsers.interact(
+        'browser-smoke',
+        guarded.stateVersion,
+        crossDomain.ref,
+        'click'
+      ),
+      /POLICY_DENIED_DOMAIN_NOT_ALLOWED_BY_TASK/
+    );
+    assert.equal(blockedHits, 0);
+    assert.match((await browsers.observe('browser-smoke')).url, /^http:\/\/127\.0\.0\.1:/);
   } finally {
     await browsers.close('browser-smoke').catch(() => undefined);
     await new Promise<void>(resolve => site.close(() => resolve()));
+    await new Promise<void>(resolve => blockedSite.close(() => resolve()));
     fs.rmSync(root, { recursive: true, force: true });
     process.env.PBO_ALLOW_PRIVATE_NETWORKS = 'false';
   }

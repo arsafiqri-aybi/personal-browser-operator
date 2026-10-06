@@ -14,6 +14,8 @@ interface Session {
   stateCounter: number;
   refs: Map<string, RefDescriptor>;
   stateVersion: string | null;
+  allowedDomains: string[];
+  navigationPolicyViolation: string | null;
 }
 
 function safeIdentityId(value: string): string {
@@ -40,28 +42,50 @@ export class BrowserManager {
       viewport: { width: 1440, height: 960 }
     });
 
-    if (process.env.PBO_ALLOW_PRIVATE_NETWORKS !== 'true') {
-      await context.route('**/*', async route => {
-        const request = route.request();
-        const rawUrl = request.url();
-        try {
-          const parsed = new URL(rawUrl);
-          if (!['http:', 'https:'].includes(parsed.protocol)) {
-            await route.continue();
-            return;
-          }
-          await assertPublicHttpUrl(rawUrl);
+    await context.route('**/*', async route => {
+      const request = route.request();
+      const rawUrl = request.url();
+
+      try {
+        const parsed = new URL(rawUrl);
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
           await route.continue();
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          if (message === 'PRIVATE_NETWORK_NAVIGATION_DENIED') {
-            await route.abort('blockedbyclient');
-            return;
-          }
-          await route.abort('failed');
+          return;
         }
-      });
-    }
+
+        if (process.env.PBO_ALLOW_PRIVATE_NETWORKS !== 'true') {
+          await assertPublicHttpUrl(rawUrl);
+        }
+
+        const session = this.sessions.get(identityId);
+        if (session && session.allowedDomains.length > 0 && request.isNavigationRequest()) {
+          const frame = request.frame();
+          const isTopLevel = frame === frame.page().mainFrame();
+          if (isTopLevel) {
+            const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
+            const allowed = session.allowedDomains.some(
+              domain => host === domain || host.endsWith('.' + domain)
+            );
+            if (!allowed) {
+              session.navigationPolicyViolation = `POLICY_DENIED_DOMAIN_NOT_ALLOWED_BY_TASK:${host}`;
+              await route.abort('blockedbyclient');
+              return;
+            }
+          }
+        }
+
+        await route.continue();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const session = this.sessions.get(identityId);
+        if (message === 'PRIVATE_NETWORK_NAVIGATION_DENIED') {
+          if (session) session.navigationPolicyViolation = message;
+          await route.abort('blockedbyclient');
+          return;
+        }
+        await route.abort('failed');
+      }
+    });
 
     const page = context.pages()[0] ?? await context.newPage();
     this.sessions.set(identityId, {
@@ -70,7 +94,9 @@ export class BrowserManager {
       page,
       stateCounter: 0,
       refs: new Map(),
-      stateVersion: null
+      stateVersion: null,
+      allowedDomains: [],
+      navigationPolicyViolation: null
     });
 
     return { identityId, pages: context.pages().length, url: page.url() };
@@ -83,6 +109,12 @@ export class BrowserManager {
     return session;
   }
 
+  setAllowedDomains(identityId: string, domains: string[]): void {
+    const session = this.session(identityId);
+    session.allowedDomains = [...new Set(domains.map(domain => domain.trim().toLowerCase().replace(/\.$/, '')).filter(Boolean))];
+    session.navigationPolicyViolation = null;
+  }
+
   private invalidateObservedState(session: Session): void {
     session.stateVersion = null;
     session.refs.clear();
@@ -90,9 +122,23 @@ export class BrowserManager {
 
   async navigate(identityId: string, rawUrl: string): Promise<{ url: string; title: string }> {
     const session = this.session(identityId);
-    const url = await assertPublicHttpUrl(rawUrl);
-    await session.page.goto(url.toString(), { waitUntil: 'domcontentloaded' });
+    const url = process.env.PBO_ALLOW_PRIVATE_NETWORKS === 'true'
+      ? new URL(rawUrl)
+      : await assertPublicHttpUrl(rawUrl);
+
+    session.navigationPolicyViolation = null;
+    try {
+      await session.page.goto(url.toString(), { waitUntil: 'domcontentloaded' });
+    } catch (error) {
+      const policyViolation = session.navigationPolicyViolation;
+      this.invalidateObservedState(session);
+      if (policyViolation) throw new Error(policyViolation);
+      throw error;
+    }
+
+    const policyViolation = session.navigationPolicyViolation;
     this.invalidateObservedState(session);
+    if (policyViolation) throw new Error(policyViolation);
     return { url: session.page.url(), title: await session.page.title() };
   }
 
@@ -234,6 +280,7 @@ export class BrowserManager {
   ): Promise<{ operation: string; targetRef: string; needsReobserve: true }> {
     const session = this.session(identityId);
     const locator = await this.resolve(identityId, stateVersion, ref);
+    session.navigationPolicyViolation = null;
 
     switch (operation) {
       case 'click':
@@ -256,7 +303,9 @@ export class BrowserManager {
         break;
     }
 
+    const policyViolation = session.navigationPolicyViolation;
     this.invalidateObservedState(session);
+    if (policyViolation) throw new Error(policyViolation);
     return { operation, targetRef: ref, needsReobserve: true };
   }
 
