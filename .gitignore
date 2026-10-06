@@ -1,0 +1,25 @@
+node_modules/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+
+# Browser/auth/runtime state: NEVER COMMIT
+runtime-data/
+playwright/.auth/
+**/.auth/
+**/user-data/
+**/profiles/
+storage-state*.json
+
+# Secrets
+*.pem
+*.key
+*.p12
+*.pfx
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/verification.schema.json",
+  "title": "VerificationResult",
+  "type": "object",
+  "required": ["verification_id", "task_id", "status", "checks", "verified_at"],
+  "properties": {
+    "verification_id": {"type": "string"},
+    "task_id": {"type": "string"},
+    "status": {"enum": ["PASS", "FAIL", "UNCERTAIN"]},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "expected", "observed", "pass"],
+        "properties": {
+          "kind": {"type": "string"},
+          "expected": {},
+          "observed": {},
+          "pass": {"type": "boolean"}
+        }
+      }
+    },
+    "verified_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

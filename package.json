@@ -1,0 +1,16 @@
+{
+  "name": "personal-browser-operator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "validate:architecture": "node scripts/validate-architecture.mjs",
+    "typecheck": "npm -w @pbo/operator-runtime run typecheck",
+    "start": "npm -w @pbo/operator-runtime run start",
+    "test": "npm run validate:architecture && npm run typecheck"
+  },
+  "devDependencies": {
+    "yaml": "2.8.1"
+  }
+}

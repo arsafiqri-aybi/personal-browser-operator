@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/identity.schema.json",
+  "title": "BrowserIdentity",
+  "type": "object",
+  "required": ["identity_id", "risk_auto_max", "status"],
+  "properties": {
+    "identity_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "display_name": {"type": "string"},
+    "allowed_domains": {"type": "array", "items": {"type": "string"}},
+    "risk_auto_max": {"enum": ["R0", "R1", "R2", "R3", "R4", "R5"]},
+    "status": {"enum": ["AVAILABLE", "OPEN", "AUTH_REQUIRED", "LOCKED"]}
+  },
+  "additionalProperties": false
+}

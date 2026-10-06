@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/checkpoint.schema.json",
+  "title": "Checkpoint",
+  "type": "object",
+  "required": ["checkpoint_id", "task_id", "task_revision", "created_at"],
+  "properties": {
+    "checkpoint_id": {"type": "string"},
+    "task_id": {"type": "string"},
+    "task_revision": {"type": "integer"},
+    "browser_identity": {"type": ["string", "null"]},
+    "last_observation_ref": {"type": ["string", "null"]},
+    "last_verification_ref": {"type": ["string", "null"]},
+    "known_effects": {"type": "array", "items": {"type": "string"}},
+    "created_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

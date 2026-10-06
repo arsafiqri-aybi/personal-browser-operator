@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/observation.schema.json",
+  "title": "BrowserObservation",
+  "type": "object",
+  "required": ["observation_id", "identity_id", "state_version", "url", "title", "aria_snapshot", "interactive_elements", "captured_at"],
+  "properties": {
+    "observation_id": {"type": "string"},
+    "identity_id": {"type": "string"},
+    "state_version": {"type": "string"},
+    "url": {"type": "string"},
+    "title": {"type": "string"},
+    "aria_snapshot": {"type": "string"},
+    "interactive_elements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ref", "role", "name"],
+        "properties": {
+          "ref": {"type": "string"},
+          "role": {"type": "string"},
+          "name": {"type": "string"},
+          "tag": {"type": "string"},
+          "placeholder": {"type": ["string", "null"]},
+          "type": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "captured_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

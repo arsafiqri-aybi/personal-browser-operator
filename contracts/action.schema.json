@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/action.schema.json",
+  "title": "ActionContract",
+  "type": "object",
+  "required": ["action_id", "task_id", "state_version", "intent", "operation", "risk_class"],
+  "properties": {
+    "action_id": {"type": "string"},
+    "task_id": {"type": "string"},
+    "state_version": {"type": "string"},
+    "intent": {"type": "string", "minLength": 1},
+    "subgoal": {"type": ["string", "null"]},
+    "preconditions": {"type": "array", "items": {"type": "string"}},
+    "target_ref": {"type": ["string", "null"]},
+    "operation": {"enum": ["navigate", "click", "fill", "press", "select", "hover"]},
+    "arguments": {"type": "object"},
+    "risk_class": {"enum": ["R0", "R1", "R2", "R3", "R4", "R5"]},
+    "expected_effect": {"type": ["string", "null"]},
+    "verification_required": {"type": "boolean"},
+    "status": {"enum": ["PROPOSED", "AUTHORIZED", "DENIED", "EXECUTED", "FAILED", "UNKNOWN_EFFECT"]}
+  },
+  "additionalProperties": false
+}

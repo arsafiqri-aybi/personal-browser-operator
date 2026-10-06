@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/audit.schema.json",
+  "title": "AuditEvent",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp"],
+  "properties": {
+    "event_id": {"type": "string"},
+    "event_type": {"type": "string"},
+    "task_id": {"type": ["string", "null"]},
+    "identity_id": {"type": ["string", "null"]},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "string"},
+    "timestamp": {"type": "string"}
+  },
+  "additionalProperties": false
+}

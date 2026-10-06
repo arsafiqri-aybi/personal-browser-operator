@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/task.schema.json",
+  "title": "TaskContract",
+  "type": "object",
+  "required": ["task_id", "revision", "goal", "status", "created_at"],
+  "properties": {
+    "task_id": {"type": "string", "pattern": "^TASK-[A-Za-z0-9_-]+$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "goal": {"type": "string", "minLength": 1},
+    "deliverable": {"type": ["string", "null"]},
+    "protected_constraints": {"type": "array", "items": {"type": "string"}},
+    "browser_identity": {"type": ["string", "null"]},
+    "allowed_domains": {"type": "array", "items": {"type": "string"}},
+    "risk_profile": {"type": "string"},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
+    "current_subgoal": {"type": ["string", "null"]},
+    "completed_subgoals": {"type": "array", "items": {"type": "string"}},
+    "blocked_subgoals": {"type": "array", "items": {"type": "string"}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "uncertainties": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["ACTIVE", "BLOCKED", "WAITING_FOR_USER", "FAILED", "COMPLETE"]},
+    "created_at": {"type": "string"},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}
