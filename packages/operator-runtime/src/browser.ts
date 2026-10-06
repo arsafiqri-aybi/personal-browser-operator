@@ -1,6 +1,7 @@
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { chromium, type BrowserContext, type Locator, type Page } from 'playwright';
+import { markUntrustedObservation } from './firewall.js';
 import type { BrowserObservation, ElementRef } from './types.js';
 
 type RefDescriptor = ElementRef & { cssPath: string };
@@ -174,7 +175,7 @@ export class BrowserManager {
       };
     });
 
-    return {
+    return markUntrustedObservation({
       observationId: `OBS-${crypto.randomUUID()}`,
       identityId,
       stateVersion,
@@ -183,7 +184,7 @@ export class BrowserManager {
       ariaSnapshot,
       interactiveElements,
       capturedAt: new Date().toISOString()
-    };
+    });
   }
 
   private async resolve(identityId: string, stateVersion: string, ref: string): Promise<Locator> {

@@ -3,7 +3,7 @@
   "$id": "pbo://contracts/observation.schema.json",
   "title": "BrowserObservation",
   "type": "object",
-  "required": ["observation_id", "identity_id", "state_version", "url", "title", "aria_snapshot", "interactive_elements", "captured_at"],
+  "required": ["observation_id", "identity_id", "state_version", "url", "title", "aria_snapshot", "interactive_elements", "trust", "authority", "injection_signals", "captured_at"],
   "properties": {
     "observation_id": {"type": "string"},
     "identity_id": {"type": "string"},
@@ -26,6 +26,9 @@
         }
       }
     },
+    "trust": {"const": "UNTRUSTED_WEB_DATA"},
+    "authority": {"const": "NONE"},
+    "injection_signals": {"type": "array", "items": {"type": "string"}},
     "captured_at": {"type": "string"}
   },
   "additionalProperties": false
