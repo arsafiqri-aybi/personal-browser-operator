@@ -3,33 +3,37 @@
 ## Evidence states
 
 - WP-00 Research & Environment Lock — PASS
-- WP-01 Architecture Genesis — PASS; Genesis and ledger SHA-256 recomputed and matched `ARCHITECTURE.lock`
+- WP-01 Architecture Genesis — PASS
 - WP-02 Execution Contracts & Schemas — IMPLEMENTED, full schema validation pending
 - WP-03 Repository & Build Foundation — IMPLEMENTED, dependency-backed typecheck pending
-- WP-04 Playwright Browser Kernel — INITIAL VERTICAL SLICE IMPLEMENTED; executable browser smoke test defined
+- WP-04 Playwright Browser Kernel — INITIAL VERTICAL SLICE IMPLEMENTED
 - WP-05 Persistent Identity & Session Vault — PARTIAL
 - WP-06 Observation & Grounding Engine — INITIAL VERTICAL SLICE IMPLEMENTED
-- WP-07 MCP Gateway — STDIO + REMOTE STREAMABLE HTTP from one server factory; contract test defined
+- WP-07 MCP Gateway — STDIO + REMOTE STREAMABLE HTTP from one server factory
 - WP-08 Durable Task State — DURABLE ATOMIC JSON SLICE IMPLEMENTED
 - WP-09 Policy Engine — INITIAL RISK GATE IMPLEMENTED
-- WP-10 Execution Orchestrator — PARTIAL; mutations now carry durable action/effect idempotency records
-- WP-11 Verification Engine — DURABLE VERIFICATION EVIDENCE; can reconcile specific actionId effects
-- WP-12 Recovery & Replanning Engine — SAFE-RETRY POLICY + duplicate-effect suppression IMPLEMENTED
-- WP-13 Instruction Firewall & Security — trust marking + injection signals + DNS/private-network guard + remote bearer/Host gate IMPLEMENTED; adversarial proof pending
-- WP-14 Human Takeover — STATE MACHINE SLICE IMPLEMENTED
-- WP-15 Audit & Provenance — HASH-CHAINED RUNTIME AUDIT SLICE IMPLEMENTED
-- WP-16 Live Browser Console — NOT STARTED
-- WP-17 Runtime Persistence & Recovery — PARTIAL; task, verification, effect, audit persistence present
+- WP-10 Execution Orchestrator — PARTIAL; durable action/effect idempotency present
+- WP-11 Verification Engine — DURABLE VERIFICATION EVIDENCE
+- WP-12 Recovery & Replanning Engine — SAFE-RETRY + duplicate-effect suppression
+- WP-13 Instruction Firewall & Security — trust/network/remote-auth boundaries implemented; adversarial proof pending
+- WP-14 Human Takeover — STATE MACHINE + same-browser noVNC runtime path DESIGNED/IMPLEMENTED
+- WP-15 Audit & Provenance — HASH-CHAINED RUNTIME AUDIT
+- WP-16 Live Browser Console — INITIAL IMPLEMENTATION: task state + audit dashboard + noVNC viewport
+- WP-17 Runtime Persistence & Recovery — PARTIAL
 - WP-18 Evaluation System — unit/contract/browser test harness defined
-- WP-19 Deployment & Secure Remote Access — HOST CONTRACT DESIGNED; no deployment evidence yet
+- WP-19 Deployment & Secure Remote Access — REPRODUCIBLE CONTAINER HOST IMPLEMENTED; live deployment not yet verified
 - WP-20+ — NOT COMPLETE
 
-## New consistency fix
+## New evidence/implementation
 
-- VFY-014 runtime is now aligned with the Action Contract requirement for stable `action_id`.
-- VFY-015 duplicate calls carrying the same actionId are suppressed rather than blindly re-executed.
-- VFY-016 reuse of one actionId for different task/identity/intent/operation is rejected as `ACTION_ID_COLLISION`.
-- VFY-017 failed mutations that might already have produced an effect are persisted as `UNKNOWN_EFFECT`; recovery requires reconciliation before retry.
-- VFY-018 verification can bind back to the effect and promote it to `VERIFIED_PASS` or `VERIFIED_FAIL`.
+- VFY-019 Docker runtime is pinned to Playwright image `v1.63.0-noble`.
+- VFY-020 Chromium runs headed on the same virtual display exposed to the human through noVNC.
+- VFY-021 VNC server is loopback-only inside the container; websockify is the browser-view bridge.
+- VFY-022 Docker Compose publishes MCP, console and noVNC on host loopback only by default.
+- VFY-023 container startup fails unless MCP token, console token and VNC password are supplied.
+- VFY-024 production runtime uses compiled JavaScript rather than tsx for MCP/console processes.
+- VFY-025 live console reads durable task and audit state without duplicating browser/session state.
+
+These are source-level implementation claims. Container build/run and real browser evidence are still NOT_RUN from this chat environment.
 
 No REAL_BROWSER_VERIFIED or PRODUCTION_READY claim is made.

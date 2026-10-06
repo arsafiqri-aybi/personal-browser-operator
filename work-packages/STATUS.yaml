@@ -19,19 +19,19 @@ work_packages:
   WP-13: {name: Instruction Firewall & Security, status: IMPLEMENTED_SLICE, depends_on: [WP-07, WP-09, WP-10, WP-12]}
   WP-14: {name: Human Takeover, status: IMPLEMENTED_SLICE, depends_on: [WP-05, WP-10]}
   WP-15: {name: Audit & Provenance, status: IMPLEMENTED_SLICE, depends_on: [WP-02, WP-03]}
-  WP-16: {name: Live Browser Console, status: NOT_STARTED, depends_on: [WP-04, WP-14, WP-15]}
+  WP-16: {name: Live Browser Console, status: IMPLEMENTED_SLICE, depends_on: [WP-04, WP-14, WP-15]}
   WP-17: {name: Runtime Persistence & Recovery, status: PARTIAL, depends_on: [WP-05, WP-08, WP-10, WP-15]}
-  WP-18: {name: Evaluation System, status: NOT_STARTED, depends_on: [WP-10, WP-11, WP-12, WP-13]}
-  WP-19: {name: Deployment & Secure Remote Access, status: NOT_STARTED, depends_on: [WP-13, WP-17, WP-18]}
+  WP-18: {name: Evaluation System, status: IMPLEMENTED_SLICE, depends_on: [WP-10, WP-11, WP-12, WP-13]}
+  WP-19: {name: Deployment & Secure Remote Access, status: IMPLEMENTED_UNVERIFIED, depends_on: [WP-13, WP-17, WP-18]}
   WP-20: {name: ChatGPT Surface Integration, status: NOT_STARTED, depends_on: [WP-07, WP-17, WP-19]}
   WP-21: {name: Real Account Pilot, status: NOT_STARTED, depends_on: [WP-13, WP-18, WP-20]}
   WP-22: {name: Release Hardening, status: NOT_STARTED, depends_on: [WP-21]}
   WP-23: {name: Production Release, status: NOT_STARTED, depends_on: [WP-22]}
 next_critical_path:
-  - deterministic tests for WP-08/WP-12/WP-13/WP-15
-  - dependency-backed typecheck
-  - real Playwright browser test
-  - MCP client smoke test
-  - live takeover console
+  - build and run pinned container on an executable host
+  - execute unit contract and real-browser smoke tests
+  - verify same-browser noVNC takeover
+  - configure authenticated HTTPS tunnel
+  - connect remote MCP to ChatGPT surface
 blocked_by:
-  - "Real Playwright/MCP runtime verification requires an execution host with npm dependencies and Playwright browser binaries."
+  - "Current chat runtime cannot execute Docker or the repo's missing npm/Playwright dependencies."

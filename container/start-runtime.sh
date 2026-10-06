@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${PBO_DATA_DIR:=/data}"
+: "${PBO_HOST:=0.0.0.0}"
+: "${PBO_PORT:=8787}"
+: "${PBO_CONSOLE_HOST:=0.0.0.0}"
+: "${PBO_CONSOLE_PORT:=8790}"
+: "${PBO_HEADLESS:=false}"
+: "${DISPLAY:=:99}"
+
+if [[ -z "${PBO_MCP_TOKEN:-}" ]]; then
+  echo "PBO_MCP_TOKEN is required in container runtime" >&2
+  exit 1
+fi
+if [[ -z "${PBO_CONSOLE_TOKEN:-}" ]]; then
+  echo "PBO_CONSOLE_TOKEN is required in container runtime" >&2
+  exit 1
+fi
+if [[ -z "${PBO_VNC_PASSWORD:-}" ]]; then
+  echo "PBO_VNC_PASSWORD is required in container runtime" >&2
+  exit 1
+fi
+
+mkdir -p "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
+chmod 700 "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
+
+x11vnc -storepasswd "$PBO_VNC_PASSWORD" "$PBO_DATA_DIR/vnc/passwd" >/dev/null
+chmod 600 "$PBO_DATA_DIR/vnc/passwd"
+
+Xvfb "$DISPLAY" -screen 0 1440x960x24 -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
+XVFB_PID=$!
+
+fluxbox -display "$DISPLAY" >/tmp/fluxbox.log 2>&1 &
+FLUXBOX_PID=$!
+
+x11vnc   -display "$DISPLAY"   -rfbauth "$PBO_DATA_DIR/vnc/passwd"   -rfbport 5900   -localhost   -forever   -shared   -noxdamage   >/tmp/x11vnc.log 2>&1 &
+VNC_PID=$!
+
+websockify   --web=/usr/share/novnc   0.0.0.0:6080   127.0.0.1:5900   >/tmp/novnc.log 2>&1 &
+NOVNC_PID=$!
+
+export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS
+
+node /app/packages/operator-runtime/dist/http.js &
+MCP_PID=$!
+
+node /app/packages/operator-runtime/dist/console.js &
+CONSOLE_PID=$!
+
+cleanup() {
+  kill "$CONSOLE_PID" "$MCP_PID" "$NOVNC_PID" "$VNC_PID" "$FLUXBOX_PID" "$XVFB_PID" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+wait -n "$MCP_PID" "$CONSOLE_PID" "$NOVNC_PID" "$VNC_PID" "$FLUXBOX_PID" "$XVFB_PID"
+echo "A runtime process exited; shutting down container." >&2
+exit 1
