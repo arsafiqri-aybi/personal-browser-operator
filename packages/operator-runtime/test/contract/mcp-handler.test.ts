@@ -25,6 +25,8 @@ test('MCP contract exposes task, effect and verification tools', async () => {
   for (const required of [
     'browser_task_start',
     'browser_task_state',
+    'browser_plan_next',
+    'browser_subgoal_update',
     'browser_observe',
     'browser_navigate',
     'browser_interact',
@@ -42,6 +44,33 @@ test('MCP contract exposes task, effect and verification tools', async () => {
   const task = JSON.parse(firstText.text) as { taskId: string; status: string };
   assert.match(task.taskId, /^TASK-/);
   assert.equal(task.status, 'ACTIVE');
+
+  const planned = await client.callTool({
+    name: 'browser_plan_next',
+    arguments: {
+      taskId: task.taskId,
+      subgoal: 'Inspect current page state',
+      decisionSummary: 'Need a grounded state before choosing a browser action.'
+    }
+  });
+  const plannedText = planned.content.find(block => block.type === 'text');
+  assert.ok(plannedText && plannedText.type === 'text');
+  const plannedPayload = JSON.parse(plannedText.text) as { task: { currentSubgoal: string | null } };
+  assert.equal(plannedPayload.task.currentSubgoal, 'Inspect current page state');
+
+  const resolved = await client.callTool({
+    name: 'browser_subgoal_update',
+    arguments: {
+      taskId: task.taskId,
+      outcome: 'COMPLETE',
+      evidenceRef: 'OBS-contract-plan'
+    }
+  });
+  const resolvedText = resolved.content.find(block => block.type === 'text');
+  assert.ok(resolvedText && resolvedText.type === 'text');
+  const resolvedPayload = JSON.parse(resolvedText.text) as { currentSubgoal: string | null; completedSubgoals: string[] };
+  assert.equal(resolvedPayload.currentSubgoal, null);
+  assert.ok(resolvedPayload.completedSubgoals.includes('Inspect current page state'));
 
   const state = await client.callTool({
     name: 'browser_task_state',

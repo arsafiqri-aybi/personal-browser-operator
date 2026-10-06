@@ -78,6 +78,68 @@ export function createOperatorServer(): McpServer {
   );
 
   server.registerTool(
+    'browser_plan_next',
+    {
+      description: 'Persist the next bounded subgoal for the current user goal. decisionSummary is an operational reason, not hidden chain-of-thought.',
+      inputSchema: z.object({
+        taskId: z.string().min(1),
+        subgoal: z.string().min(1).max(1000),
+        decisionSummary: z.string().min(1).max(500)
+      })
+    },
+    async ({ taskId, subgoal, decisionSummary }) => {
+      try {
+        const task = tasks.planNextSubgoal(taskId, subgoal);
+        audit.append({
+          eventType: 'SUBGOAL_PLANNED',
+          taskId,
+          summary: `Next subgoal: ${task.currentSubgoal}; decision=${decisionSummary.slice(0, 500)}`
+        });
+        return result({
+          task,
+          plan: {
+            taskId,
+            taskRevision: task.revision,
+            currentSubgoal: task.currentSubgoal,
+            decisionSummary,
+            rule: 'Execute only bounded actions that advance this subgoal while preserving the user goal and policy.'
+          }
+        });
+      } catch (e) {
+        return error(e);
+      }
+    }
+  );
+
+  server.registerTool(
+    'browser_subgoal_update',
+    {
+      description: 'Mark the active/current browser subgoal complete or blocked, attach optional evidence, and return the updated durable task state.',
+      inputSchema: z.object({
+        taskId: z.string().min(1),
+        outcome: z.enum(['COMPLETE', 'BLOCKED']),
+        subgoal: z.string().min(1).max(1000).optional(),
+        note: z.string().max(500).optional(),
+        evidenceRef: z.string().min(1).max(300).optional()
+      })
+    },
+    async ({ taskId, outcome, subgoal, note, evidenceRef }) => {
+      try {
+        const task = tasks.resolveSubgoal(taskId, outcome, subgoal, evidenceRef);
+        audit.append({
+          eventType: outcome === 'COMPLETE' ? 'SUBGOAL_COMPLETED' : 'SUBGOAL_BLOCKED',
+          taskId,
+          summary: `${outcome}: ${subgoal ?? 'current subgoal'}${note ? `; note=${note.slice(0, 500)}` : ''}`,
+          evidenceRefs: evidenceRef ? [evidenceRef] : []
+        });
+        return result(task);
+      } catch (e) {
+        return error(e);
+      }
+    }
+  );
+
+  server.registerTool(
     'browser_session_open',
     {
       description: 'Open or reuse an isolated persistent Chromium identity for an existing task. Credentials are never accepted as arguments.',

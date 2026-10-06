@@ -57,3 +57,36 @@ test('audit entries form a hash chain', () => {
 
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+
+test('planner subgoal lifecycle persists big-picture progress without hidden reasoning', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pbo-plan-'));
+  process.env.PBO_DATA_DIR = root;
+
+  const store = new TaskStore();
+  const task = store.start('Research a product and submit the verified result');
+
+  const planned = store.planNextSubgoal(task.taskId, 'Collect authoritative product facts');
+  assert.equal(planned.currentSubgoal, 'Collect authoritative product facts');
+
+  const completed = store.resolveSubgoal(
+    task.taskId,
+    'COMPLETE',
+    undefined,
+    'OBS-authoritative-facts'
+  );
+  assert.equal(completed.currentSubgoal, null);
+  assert.ok(completed.completedSubgoals.includes('Collect authoritative product facts'));
+  assert.ok(completed.evidenceRefs.includes('OBS-authoritative-facts'));
+
+  store.planNextSubgoal(task.taskId, 'Submit result');
+  const blocked = store.resolveSubgoal(task.taskId, 'BLOCKED', undefined);
+  assert.equal(blocked.currentSubgoal, null);
+  assert.ok(blocked.blockedSubgoals.includes('Submit result'));
+
+  const restored = new TaskStore().get(task.taskId);
+  assert.ok(restored.completedSubgoals.includes('Collect authoritative product facts'));
+  assert.ok(restored.blockedSubgoals.includes('Submit result'));
+
+  fs.rmSync(root, { recursive: true, force: true });
+});

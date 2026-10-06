@@ -105,6 +105,43 @@ export class TaskStore {
     });
   }
 
+  planNextSubgoal(taskId: string, subgoalRaw: string): TaskState {
+    const subgoal = subgoalRaw.trim();
+    if (!subgoal) throw new Error('SUBGOAL_REQUIRED');
+    return this.mutate(taskId, task => {
+      if (task.status === 'COMPLETE' || task.status === 'FAILED') {
+        throw new Error('TASK_NOT_ACTIVE');
+      }
+      task.currentSubgoal = subgoal;
+      if (task.status === 'BLOCKED') task.status = 'ACTIVE';
+    });
+  }
+
+  resolveSubgoal(
+    taskId: string,
+    outcome: 'COMPLETE' | 'BLOCKED',
+    subgoalRaw?: string,
+    evidenceRef?: string
+  ): TaskState {
+    return this.mutate(taskId, task => {
+      const subgoal = (subgoalRaw ?? task.currentSubgoal ?? '').trim();
+      if (!subgoal) throw new Error('ACTIVE_SUBGOAL_REQUIRED');
+
+      if (outcome === 'COMPLETE') {
+        if (!task.completedSubgoals.includes(subgoal)) task.completedSubgoals.push(subgoal);
+        task.blockedSubgoals = task.blockedSubgoals.filter(item => item !== subgoal);
+      } else {
+        if (!task.blockedSubgoals.includes(subgoal)) task.blockedSubgoals.push(subgoal);
+      }
+
+      if (evidenceRef && !task.evidenceRefs.includes(evidenceRef)) {
+        task.evidenceRefs.push(evidenceRef);
+      }
+
+      if (task.currentSubgoal === subgoal) task.currentSubgoal = null;
+    });
+  }
+
   addEvidence(taskId: string, evidenceRef: string): TaskState {
     return this.mutate(taskId, task => {
       if (!task.evidenceRefs.includes(evidenceRef)) task.evidenceRefs.push(evidenceRef);

@@ -36,6 +36,20 @@ Do not claim success from an action call alone.
 - Open/reuse the intended persistent browser identity with `browser_session_open`.
 - Never pass passwords, OTPs, passkeys, cookies, session tokens, or other login secrets as tool arguments.
 
+## Planning and big-picture continuity
+
+Before a multi-step workflow starts acting:
+
+- read `browser_task_state`;
+- choose one bounded next subgoal with `browser_plan_next`;
+- keep `decisionSummary` short and operational: what must be achieved next and why it advances the user goal; never store hidden chain-of-thought;
+- execute only actions that advance the current subgoal;
+- after observable evidence exists, call `browser_subgoal_update` with `COMPLETE` or `BLOCKED`;
+- attach the strongest relevant evidence ref when completing a subgoal;
+- then read the updated task state and choose the next subgoal.
+
+The durable task state is the operator's big-picture memory. Completed and blocked subgoals must survive browser navigation, reconnects, model turns, and runtime restart.
+
 ## Observation and grounding
 
 - Use `browser_observe` before ref-bound interaction and after any mutation/navigation.
