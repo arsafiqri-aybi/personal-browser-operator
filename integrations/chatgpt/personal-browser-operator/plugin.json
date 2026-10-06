@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "personal-browser-operator",
+  "version": "0.1.0",
+  "description": "Private goal-driven browser operator backed by a persistent Playwright Chromium session and a verifiable MCP control loop.",
+  "author": {
+    "name": "Personal Browser Operator Project"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Personal Browser Operator",
+        "shortDescription": "Private browser operator",
+        "longDescription": "Give ChatGPT a browser goal and let the operator navigate real websites through a persistent Playwright session with durable task state, risk policy, effect idempotency, verification, recovery, and protected human takeover.",
+        "developerName": "Personal Browser Operator Project",
+        "category": "Productivity",
+        "capabilities": ["Interactive"],
+        "defaultPrompt": [
+          "Use my Personal Browser Operator to complete this browser task safely and verify the result.",
+          "Open my persistent browser session, inspect the current page, and continue the task from the verified state."
+        ]
+      }
+    }
+  }
+}
