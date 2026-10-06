@@ -7,10 +7,12 @@ services:
     init: true
     shm_size: "1gb"
     environment:
+      PORT: 8080
+      PBO_PUBLIC_PORT: 8080
       PBO_DATA_DIR: /data
-      PBO_HOST: 0.0.0.0
+      PBO_HOST: 127.0.0.1
       PBO_PORT: 8787
-      PBO_CONSOLE_HOST: 0.0.0.0
+      PBO_CONSOLE_HOST: 127.0.0.1
       PBO_CONSOLE_PORT: 8790
       PBO_HEADLESS: "false"
       PBO_AUTO_RISK: R2
@@ -18,16 +20,14 @@ services:
       PBO_MCP_TOKEN: "${PBO_MCP_TOKEN:?required}"
       PBO_CONSOLE_TOKEN: "${PBO_CONSOLE_TOKEN:?required}"
       PBO_VNC_PASSWORD: "${PBO_VNC_PASSWORD:?required}"
-      PBO_ALLOWED_HOSTS: "${PBO_ALLOWED_HOSTS:-localhost,127.0.0.1}"
-      PBO_NOVNC_PUBLIC_URL: "${PBO_NOVNC_PUBLIC_URL:-http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale}"
+      PBO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      PBO_NOVNC_PUBLIC_URL: "/novnc/vnc.html?autoconnect=true&resize=scale"
     volumes:
       - pbo-data:/data
     ports:
-      - "127.0.0.1:8787:8787"
-      - "127.0.0.1:8790:8790"
-      - "127.0.0.1:6080:6080"
+      - "127.0.0.1:8080:8080"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 15s
       timeout: 5s
       retries: 5

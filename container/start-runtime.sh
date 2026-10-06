@@ -2,11 +2,12 @@
 set -euo pipefail
 
 : "${PBO_DATA_DIR:=/data}"
-: "${PBO_HOST:=0.0.0.0}"
+: "${PBO_HOST:=127.0.0.1}"
 : "${PBO_PORT:=8787}"
-: "${PBO_CONSOLE_HOST:=0.0.0.0}"
+: "${PBO_CONSOLE_HOST:=127.0.0.1}"
 : "${PBO_CONSOLE_PORT:=8790}"
 : "${PBO_HEADLESS:=false}"
+PBO_PUBLIC_PORT="${PORT:-${PBO_PUBLIC_PORT:-8080}}"
 : "${DISPLAY:=:99}"
 
 if [[ -z "${PBO_MCP_TOKEN:-}" ]]; then
@@ -22,7 +23,11 @@ if [[ -z "${PBO_VNC_PASSWORD:-}" ]]; then
   exit 1
 fi
 
-mkdir -p "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
+mkdir -p \
+  "$PBO_DATA_DIR" \
+  "$PBO_DATA_DIR/vnc" \
+  /tmp/nginx-client-body \
+  /tmp/nginx-proxy
 chmod 700 "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
 
 x11vnc -storepasswd "$PBO_VNC_PASSWORD" "$PBO_DATA_DIR/vnc/passwd" >/dev/null
@@ -34,13 +39,26 @@ XVFB_PID=$!
 fluxbox -display "$DISPLAY" >/tmp/fluxbox.log 2>&1 &
 FLUXBOX_PID=$!
 
-x11vnc   -display "$DISPLAY"   -rfbauth "$PBO_DATA_DIR/vnc/passwd"   -rfbport 5900   -localhost   -forever   -shared   -noxdamage   >/tmp/x11vnc.log 2>&1 &
+x11vnc \
+  -display "$DISPLAY" \
+  -rfbauth "$PBO_DATA_DIR/vnc/passwd" \
+  -rfbport 5900 \
+  -localhost \
+  -forever \
+  -shared \
+  -noxdamage \
+  >/tmp/x11vnc.log 2>&1 &
 VNC_PID=$!
 
-websockify   --web=/usr/share/novnc   0.0.0.0:6080   127.0.0.1:5900   >/tmp/novnc.log 2>&1 &
+websockify \
+  --web=/usr/share/novnc \
+  127.0.0.1:6080 \
+  127.0.0.1:5900 \
+  >/tmp/novnc.log 2>&1 &
 NOVNC_PID=$!
 
-export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS
+export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS PBO_PUBLIC_PORT
+export PBO_NOVNC_PUBLIC_URL="${PBO_NOVNC_PUBLIC_URL:-/novnc/vnc.html?autoconnect=true&resize=scale}"
 
 node /app/packages/operator-runtime/dist/http.js &
 MCP_PID=$!
@@ -48,11 +66,18 @@ MCP_PID=$!
 node /app/packages/operator-runtime/dist/console.js &
 CONSOLE_PID=$!
 
+envsubst '${PBO_PUBLIC_PORT}' \
+  < /app/container/nginx.conf.template \
+  > /tmp/nginx.conf
+
+nginx -c /tmp/nginx.conf -g 'daemon off;' &
+NGINX_PID=$!
+
 cleanup() {
-  kill "$CONSOLE_PID" "$MCP_PID" "$NOVNC_PID" "$VNC_PID" "$FLUXBOX_PID" "$XVFB_PID" 2>/dev/null || true
+  kill "$NGINX_PID" "$CONSOLE_PID" "$MCP_PID" "$NOVNC_PID" "$VNC_PID" "$FLUXBOX_PID" "$XVFB_PID" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
-wait -n "$MCP_PID" "$CONSOLE_PID" "$NOVNC_PID" "$VNC_PID" "$FLUXBOX_PID" "$XVFB_PID"
+wait -n "$NGINX_PID" "$MCP_PID" "$CONSOLE_PID" "$NOVNC_PID" "$VNC_PID" "$FLUXBOX_PID" "$XVFB_PID"
 echo "A runtime process exited; shutting down container." >&2
 exit 1

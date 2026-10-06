@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-architecture_version: "0.2.0"
+architecture_version: "0.3.0"
 status: LOCKED
 control_loop:
   - STATE
@@ -31,8 +31,16 @@ runtime_host:
   browser_mode: persistent_headed_chromium
   execution_kernel: playwright
   human_takeover: same_browser_session
-  public_ingress: authenticated_tls_proxy_or_tunnel
-  default_port_exposure: loopback_only
+  public_ingress: single_authenticated_https_origin
+  internal_services: loopback_only
+  persistent_mount: /data
+  provider_dependency: none
+public_routes:
+  /mcp: mcp_gateway
+  /console: operator_console
+  /api: operator_console_api
+  /novnc: same_browser_takeover
+  /health: readiness
 release_truth_states:
   - DESIGNED
   - IMPLEMENTED

@@ -1,0 +1,25 @@
+{
+  "entry_id": "ARCH-0002",
+  "architecture_version": "0.3.0",
+  "previous_entry_hash": "fa6d8a56198b564050da0c37978010ea30b2882306f89f90b9c3ebb53a21460b",
+  "reason": "Lock provider-neutral persistent deployment with a single public HTTPS ingress while keeping MCP, console, and noVNC internal.",
+  "affected_modules": ["PBO-01","PBO-04","PBO-05","PBO-13","PBO-14","PBO-16","PBO-17","PBO-18","PBO-19"],
+  "affected_contracts": ["runtime_host","public_ingress","identity_state","takeover"],
+  "protected_invariants_changed": false,
+  "required_tests": ["single-public-port","internal-loopback-only","mcp-auth-through-proxy","console-auth-through-proxy","novnc-websocket-through-proxy","persistent-data-restart"],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "architecture/architecture.yaml": "bf50f1f1cef82ecf7b5e502e2dc6b48756858e9343d9d5fdd9ef4ab63b4cab5e",
+    "architecture/adr/ADR-0004-provider-neutral-persistent-host.md": "2c55f53d643a766b0035105963e27b19152560825f9af29729defeae39b943b2",
+    "container/nginx.conf.template": "ac2a4161a86ad95db1bd86b1199abfc9c66dd3cd91bd93e4630ef3ea6318e8f8",
+    "container/start-runtime.sh": "49b37e6d8a07fca9d7cf4f8b6f195f7942f46d9480def7cd7b67cbeb872d43a1",
+    "Dockerfile": "5063ffb9e386aa6f04f7c5ec2e609254c78abb835c875b619d63e20e4b8e4170",
+    "docker-compose.yml": "a6f126f349bc53d52413ec652e97d7529ecbbd2629ca72bbd8dc1f2ffd9b3a09"
+  },
+  "evidence": {
+    "cloudflare_containers": "unavailable_on_current_account_without_workers_paid_plan",
+    "cloudflare_zones": "none",
+    "preferred_initial_host": "railway_or_equivalent_persistent_container_host"
+  },
+  "entry_hash": "e7ac07bf427403e845a7b33726588e5b8c4f8082bad63af2a2e1ae7023b549af"
+}

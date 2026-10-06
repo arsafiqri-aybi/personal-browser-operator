@@ -9,6 +9,8 @@ RUN apt-get update \
      x11vnc \
      novnc \
      websockify \
+     nginx \
+     gettext-base \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -27,16 +29,16 @@ RUN npm -w @pbo/operator-runtime run build \
   && chown -R pwuser:pwuser /app /data
 
 ENV PBO_DATA_DIR=/data
-ENV PBO_HOST=0.0.0.0
+ENV PBO_HOST=127.0.0.1
 ENV PBO_PORT=8787
-ENV PBO_CONSOLE_HOST=0.0.0.0
+ENV PBO_CONSOLE_HOST=127.0.0.1
 ENV PBO_CONSOLE_PORT=8790
 ENV PBO_HEADLESS=false
 ENV DISPLAY=:99
 
 VOLUME ["/data"]
 
-EXPOSE 8787 8790 6080
+EXPOSE 8080
 
 USER pwuser
 
