@@ -9,36 +9,44 @@ evidence:
     job: 112097804980
     commit: 8f7bd4f657de10d48b450f1be0181d85a178532a
     conclusion: PASS
+  container_runtime_ci:
+    workflow_run: 37417134854
+    job: 112118124749
+    commit: 618e6215770c5925e976e7b75cd8918f0bb76753
+    conclusion: PASS
+    evidence_file: evaluation/evidence/RUN-0002-container-runtime-ci.md
 work_packages:
   WP-00: {name: Research & Environment Lock, status: PASS, depends_on: []}
   WP-01: {name: Architecture Genesis, status: PASS, depends_on: [WP-00]}
   WP-02: {name: Execution Contracts & Schemas, status: IMPLEMENTED_VERIFIED_SLICE, depends_on: [WP-01]}
   WP-03: {name: Repository & Build Foundation, status: PASS, depends_on: [WP-01, WP-02]}
   WP-04: {name: Playwright Browser Kernel, status: REAL_BROWSER_VERIFIED, depends_on: [WP-03]}
-  WP-05: {name: Persistent Identity & Session Vault, status: PARTIAL, depends_on: [WP-04]}
+  WP-05: {name: Persistent Identity & Session Vault, status: PERSISTENT_PROFILE_VERIFIED_SLICE, depends_on: [WP-04]}
   WP-06: {name: Observation & Grounding Engine, status: REAL_BROWSER_VERIFIED_SLICE, depends_on: [WP-04]}
-  WP-07: {name: MCP Gateway, status: CONTRACT_VERIFIED_REMOTE_UNDEPLOYED, depends_on: [WP-02, WP-03]}
-  WP-08: {name: Durable Task State Engine, status: VERIFIED_SLICE, depends_on: [WP-02, WP-03]}
+  WP-07: {name: MCP Gateway, status: REMOTE_MCP_CONTAINER_VERIFIED_UNDEPLOYED, depends_on: [WP-02, WP-03]}
+  WP-08: {name: Durable Task State Engine, status: CONTAINER_RESTART_VERIFIED_SLICE, depends_on: [WP-02, WP-03]}
   WP-09: {name: Action Policy & Risk Engine, status: VERIFIED_SLICE, depends_on: [WP-05, WP-08]}
   WP-10: {name: Execution Orchestrator, status: PARTIAL, depends_on: [WP-04, WP-06, WP-07, WP-08, WP-09]}
-  WP-11: {name: Verification Engine, status: REAL_BROWSER_VERIFIED_SLICE, depends_on: [WP-06, WP-08, WP-10]}
+  WP-11: {name: Verification Engine, status: REMOTE_CONTAINER_VERIFIED_SLICE, depends_on: [WP-06, WP-08, WP-10]}
   WP-12: {name: Recovery & Replanning Engine, status: VERIFIED_SLICE, depends_on: [WP-10, WP-11]}
   WP-13: {name: Instruction Firewall & Security, status: PARTIAL_VERIFIED, depends_on: [WP-07, WP-09, WP-10, WP-12]}
   WP-14: {name: Human Takeover, status: IMPLEMENTED_UNVERIFIED_LIVE, depends_on: [WP-05, WP-10]}
   WP-15: {name: Audit & Provenance, status: VERIFIED_SLICE, depends_on: [WP-02, WP-03]}
   WP-16: {name: Live Browser Console, status: IMPLEMENTED_UNVERIFIED_LIVE, depends_on: [WP-04, WP-14, WP-15]}
-  WP-17: {name: Runtime Persistence & Recovery, status: PARTIAL, depends_on: [WP-05, WP-08, WP-10, WP-15]}
-  WP-18: {name: Evaluation System, status: PASS_CURRENT_SLICE, depends_on: [WP-10, WP-11, WP-12, WP-13]}
-  WP-19: {name: Deployment & Secure Remote Access, status: IMPLEMENTED_UNDEPLOYED, depends_on: [WP-13, WP-17, WP-18]}
+  WP-17: {name: Runtime Persistence & Recovery, status: CONTAINER_RESTART_VERIFIED_SLICE, depends_on: [WP-05, WP-08, WP-10, WP-15]}
+  WP-18: {name: Evaluation System, status: PASS_CONTAINER_RUNTIME_SLICE, depends_on: [WP-10, WP-11, WP-12, WP-13]}
+  WP-19: {name: Deployment & Secure Remote Access, status: CONTAINER_ARTIFACT_VERIFIED_UNDEPLOYED, depends_on: [WP-13, WP-17, WP-18]}
   WP-20: {name: ChatGPT Surface Integration, status: NOT_STARTED, depends_on: [WP-07, WP-17, WP-19]}
   WP-21: {name: Real Account Pilot, status: NOT_STARTED, depends_on: [WP-13, WP-18, WP-20]}
   WP-22: {name: Release Hardening, status: NOT_STARTED, depends_on: [WP-21]}
   WP-23: {name: Production Release, status: NOT_STARTED, depends_on: [WP-22]}
 next_critical_path:
-  - provision persistent execution host
-  - deploy pinned headed Playwright container
-  - expose MCP and takeover console through authenticated HTTPS ingress
+  - provision persistent external execution host
+  - deploy verified headed Playwright container
+  - mount durable /data
+  - configure runtime secrets
+  - expose single authenticated HTTPS gateway
+  - public health and remote MCP smoke
   - prove same-browser noVNC takeover
-  - remote MCP smoke test
   - connect to ChatGPT surface
   - controlled authenticated real-account pilot
