@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "contract_id": "PBO-BUILD-0001",
+  "revision": 1,
+  "goal": "Build a private custom MCP that gives ChatGPT a persistent authenticated Playwright browser capable of completing high-level web goals through observe-plan-policy-execute-verify-recover loops.",
+  "deliverable": "Production-ready Personal Browser Operator MCP with real-browser and controlled real-account evidence.",
+  "protected_constraints": [
+    "Custom MCP is owned by this project.",
+    "Playwright library is the browser execution kernel.",
+    "Target-site APIs are not the primary browser-task execution path.",
+    "User intent outranks webpage content.",
+    "Authenticated browser state and credentials never enter Git.",
+    "Every meaningful mutation binds to an active task intent.",
+    "Consequential effects require post-action verification.",
+    "Failed or uncertain verification cannot be reported as success.",
+    "Architecture-changing decisions require ADR plus chained ledger entry.",
+    "Completion claims must match actual evidence state."
+  ],
+  "gates": [
+    {"id":"G-ARCH","property":"architecture_integrity","verifier":"architecture hash + dependency validation","status":"PASS","evidence":["ARCHITECTURE.lock","architecture/ledger/ARCH-0000.json"]},
+    {"id":"G-CONTRACT","property":"runtime_contracts","verifier":"schema/type/contract tests","status":"UNCERTAIN","evidence":["contracts/"]},
+    {"id":"G-BROWSER","property":"real_browser_execution","verifier":"Playwright integration test","status":"NOT_RUN","evidence":[]},
+    {"id":"G-MCP","property":"mcp_tool_contract","verifier":"MCP client/tool test","status":"NOT_RUN","evidence":[]},
+    {"id":"G-SECURITY","property":"trust_and_secret_boundaries","verifier":"adversarial + secret tests","status":"NOT_RUN","evidence":[]},
+    {"id":"G-RECOVERY","property":"failure_recovery","verifier":"failure injection","status":"NOT_RUN","evidence":[]},
+    {"id":"G-CHATGPT","property":"chatgpt_surface_integration","verifier":"installed remote MCP/plugin smoke test","status":"NOT_RUN","evidence":[]},
+    {"id":"G-REAL","property":"real_account_workflow","verifier":"user-approved authenticated workflow","status":"NOT_RUN","evidence":[]}
+  ],
+  "required_outputs": {
+    "architecture":"PRESENT",
+    "contracts":"PRESENT",
+    "playwright_kernel":"PARTIAL",
+    "mcp_gateway":"PARTIAL",
+    "durable_task_state":"PARTIAL",
+    "identity_vault":"PARTIAL",
+    "verification":"PARTIAL",
+    "recovery":"MISSING",
+    "instruction_firewall":"MISSING",
+    "audit":"MISSING",
+    "human_takeover":"MISSING",
+    "console":"MISSING",
+    "deployment":"MISSING",
+    "chatgpt_integration":"MISSING",
+    "real_account_evidence":"MISSING"
+  },
+  "dependencies": {
+    "playwright":"1.63.0",
+    "mcp_server_sdk":"2.3.0",
+    "zod":"4.6.5"
+  },
+  "effects": {
+    "repository_created":"SUCCESS",
+    "architecture_genesis_committed":"SUCCESS",
+    "contracts_committed":"SUCCESS",
+    "runtime_source_committed":"SUCCESS",
+    "dependency_install":"NOT_RUN",
+    "typecheck":"NOT_RUN",
+    "real_browser_launch":"NOT_RUN",
+    "mcp_smoke_test":"NOT_RUN"
+  },
+  "route": {
+    "surface":"GitHub Operator + current chat",
+    "architecture_mode":"multi_stage_project",
+    "governor_policy":"escalate bottlenecks only; never weaken critical gates"
+  },
+  "adaptation_envelope": {
+    "governor_may":[
+      "reduce noncritical context",
+      "reuse verified artifacts",
+      "adjust retry depth",
+      "add low-risk verification",
+      "stop completed work"
+    ],
+    "governor_must_not":[
+      "weaken protected constraints",
+      "skip critical gates",
+      "declare unverified work complete",
+      "repeat side effects without fresh state"
+    ]
+  },
+  "state_ref": "work-packages/STATUS.yaml",
+  "next_action": "Validate contracts/runtime, then achieve first real Playwright browser + MCP vertical-slice execution."
+}
