@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/mobile-command.schema.json",
+  "title": "MobileCommand",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "payload", "approved"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["observe", "open_url", "interact", "global_action"]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "approved": {
+      "type": "boolean"
+    }
+  }
+}

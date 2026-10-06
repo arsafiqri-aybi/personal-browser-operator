@@ -28,3 +28,11 @@ interfaces:
     producer: PBO-16
     consumer: [PBO-08, PBO-10, PBO-17]
     contract: task_status_waiting_for_user_plus_fresh_observation_on_resume
+  - id: IF-MOBILE-COMMAND
+    producer: PBO-21
+    consumer: PBO-22
+    contract: contracts/mobile-command.schema.json
+  - id: IF-MOBILE-OBSERVATION
+    producer: PBO-22
+    consumer: [PBO-11, PBO-14, PBO-20]
+    contract: contracts/mobile-observation.schema.json

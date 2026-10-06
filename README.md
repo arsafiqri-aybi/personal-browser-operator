@@ -80,3 +80,15 @@ See:
 - retry logic never marks blind side-effect retry safe.
 
 See `architecture/` and `evaluation/SECURITY_TEST_PLAN.md`.
+
+## Android Mobile Host
+
+The repository now includes an optional phone-hosted execution path:
+
+```text
+ChatGPT -> Mobile MCP -> authenticated relay -> outbound WebSocket -> Android AccessibilityService
+```
+
+This path avoids cloud-browser runtime quotas because UI execution happens on the user's own Android device. It preserves task binding, risk policy, stable action IDs, verification, audit, stale-ref rejection, and human takeover. Password fields are redacted from observations and require explicit approval before fill.
+
+See `docs/MOBILE_HOST.md`.

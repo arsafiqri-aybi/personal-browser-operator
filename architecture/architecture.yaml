@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-architecture_version: "0.4.0"
+architecture_version: "0.5.0"
 status: LOCKED
 control_loop:
   - STATE
@@ -36,6 +36,15 @@ runtime_host:
   persistent_mount: /data
   privilege_model: root_bootstrap_nonroot_workload
   provider_dependency: none
+  execution_providers:
+    browser:
+      kernel: playwright
+      mode: persistent_headed_chromium
+    android_mobile:
+      relay: cloudflare_durable_object_websocket
+      kernel: accessibility_service
+      ingress: outbound_device_connection_only
+      sensitive_input: explicit_approval_required
   mcp_authentication:
     bootstrap: static_bearer
     production: oauth_resource_server

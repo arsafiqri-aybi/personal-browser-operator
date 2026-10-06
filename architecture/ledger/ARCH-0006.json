@@ -1,0 +1,50 @@
+{
+  "entry_id": "ARCH-0006",
+  "architecture_version": "0.5.0",
+  "previous_entry_hash": "cfa6276bf5a4de7b0a6dc3ce01fea110447ce1dc1e20acf6a15ddc750979b09a",
+  "reason": "Add an optional Android phone execution provider using a separately authenticated Cloudflare Durable Object relay and AccessibilityService kernel while preserving Playwright as the existing browser provider.",
+  "affected_modules": [
+    "PBO-01",
+    "PBO-09",
+    "PBO-11",
+    "PBO-14",
+    "PBO-16",
+    "PBO-20",
+    "PBO-21",
+    "PBO-22"
+  ],
+  "affected_contracts": [
+    "mobile_command",
+    "mobile_observation",
+    "device_relay",
+    "mobile_mcp_runtime"
+  ],
+  "protected_invariants_changed": false,
+  "required_tests": [
+    "mobile-protocol-schema",
+    "mobile-relay-auth",
+    "mobile-stale-ref",
+    "mobile-password-approval",
+    "mobile-verification"
+  ],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "architecture/architecture.yaml": "7466454a77a2f1db865da02cfb9ab5cd60e36180b6a5e51a6ab60fc33379bfbb",
+    "architecture/interfaces.yaml": "81f1ca7776da7f2c6386a846f891ae1cb4964e854ae06e106a78c2c1159fb983",
+    "architecture/modules/registry.yaml": "25ce1d6f4b0a6f53bb30cca4c7b238ace47f17e888d8cc574e998eb46ff33403",
+    "architecture/dependency-graph.yaml": "0a913990146336d6a6bb6f38b69b6687c784ab5a11704b5f29f765159d670526",
+    "architecture/adr/ADR-0008-android-mobile-execution-provider.md": "41b5c0b357fd35254df3691763a1b9c8d1cb513fcbbb8cee900253d7ad2b38b8",
+    "contracts/mobile-command.schema.json": "52546ca0e02820e99c05ea213f6973a1dc011a112c116a7b66ae31622ec372f7",
+    "contracts/mobile-observation.schema.json": "0dd7af2966b0cf7d62ac992840047f380cfb1213d860a7de557f59bcc89e69f4",
+    "packages/operator-runtime/src/mobile.ts": "7bdc1358e225ed744f383667d9daad8ebd13164c36e5f2e7c2ff5dcd4d7b8b14",
+    "mobile/relay/src/worker.js": "0651ad51524181835f019f506ca07906513e915ff13ccf978098f4bd9a93d238",
+    "mobile/android-agent/app/src/main/java/dev/pbo/mobile/OperatorAccessibilityService.kt": "4979c0e61617439215332e148bf46547c6f774412bfe845717b9cdfbe33b9867"
+  },
+  "evidence": {
+    "relay_profile": "Cloudflare Durable Object WebSocket Hibernation API",
+    "execution_profile": "Android AccessibilityService",
+    "device_ingress": "outbound_only",
+    "sensitive_input_policy": "explicit_approval_required"
+  },
+  "entry_hash": "53fcebc1b1ea082b8b422f5f1106387748aa2bc17d8d2ba7f71df61e1862ca19"
+}

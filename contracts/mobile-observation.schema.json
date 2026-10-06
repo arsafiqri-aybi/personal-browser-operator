@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/mobile-observation.schema.json",
+  "title": "MobileObservation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observationId",
+    "deviceId",
+    "stateVersion",
+    "packageName",
+    "windowClass",
+    "textSnapshot",
+    "interactiveElements",
+    "trust",
+    "authority",
+    "capturedAt"
+  ],
+  "properties": {
+    "observationId": { "type": "string", "pattern": "^MOBS-" },
+    "deviceId": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,80}$" },
+    "stateVersion": { "type": "string", "minLength": 1 },
+    "packageName": { "type": "string" },
+    "windowClass": { "type": "string" },
+    "textSnapshot": { "type": "string" },
+    "interactiveElements": {
+      "type": "array",
+      "maxItems": 250,
+      "items": {
+        "type": "object",
+        "required": ["ref", "text", "description", "className", "clickable", "editable", "password", "bounds"],
+        "properties": {
+          "ref": { "type": "string", "pattern": "^mref-" },
+          "text": { "type": "string" },
+          "description": { "type": "string" },
+          "className": { "type": "string" },
+          "viewId": { "type": ["string", "null"] },
+          "clickable": { "type": "boolean" },
+          "editable": { "type": "boolean" },
+          "password": { "type": "boolean" },
+          "bounds": {
+            "type": "object",
+            "required": ["left", "top", "right", "bottom"],
+            "properties": {
+              "left": { "type": "integer" },
+              "top": { "type": "integer" },
+              "right": { "type": "integer" },
+              "bottom": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "trust": { "const": "UNTRUSTED_DEVICE_DATA" },
+    "authority": { "const": "NONE" },
+    "capturedAt": { "type": "string" }
+  }
+}
