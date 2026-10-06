@@ -37,13 +37,19 @@ function isPrivateAddress(address: string): boolean {
   return version === 4 ? isPrivateIPv4(address) : version === 6 ? isPrivateIPv6(address) : false;
 }
 
+function normalizeHostname(hostname: string): string {
+  const lower = hostname.toLowerCase();
+  if (lower.startsWith('[') && lower.endsWith(']')) return lower.slice(1, -1);
+  return lower;
+}
+
 export async function assertPublicHttpUrl(raw: string): Promise<URL> {
   const url = new URL(raw);
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('UNSUPPORTED_URL_PROTOCOL');
 
   if (process.env.PBO_ALLOW_PRIVATE_NETWORKS === 'true') return url;
 
-  const host = url.hostname.toLowerCase();
+  const host = normalizeHostname(url.hostname);
   if (host === 'localhost' || host.endsWith('.local')) {
     throw new Error('PRIVATE_NETWORK_NAVIGATION_DENIED');
   }
