@@ -3,8 +3,8 @@ project: personal-browser-operator
 strategy: dependency_first
 quality_mode: quality_floor_with_evidence
 highest_proven_state: REAL_BROWSER_VERIFIED
-architecture_version: "0.4.0"
-ledger_head: ARCH-0005
+architecture_version: "0.5.1"
+ledger_head: ARCH-0007
 evidence:
   real_browser_ci:
     workflow_run: 37410557580
@@ -17,6 +17,21 @@ evidence:
     commit: 618e6215770c5925e976e7b75cd8918f0bb76753
     conclusion: PASS
     evidence_file: evaluation/evidence/RUN-0002-container-runtime-ci.md
+  container_runtime_regression_ci:
+    workflow_run: 37421450416
+    job: 112131485834
+    commit: 69b3d805b44b318d96036c7ccdd63b2bb7ea10eb
+    conclusion: PASS
+    proves:
+      - deterministic_architecture_and_typescript
+      - real_playwright_browser
+      - container_build
+      - authenticated_remote_mcp
+      - verified_effect_reconciliation
+      - non_root_node_and_chromium
+      - durable_profile_before_and_after_restart
+      - durable_task_across_container_restart
+      - deterministic_x_display_bootstrap
   chatgpt_integration_source_ci:
     workflow_run: 37417847128
     job: 112120345288

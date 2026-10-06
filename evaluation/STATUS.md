@@ -8,14 +8,14 @@ The tested vertical slice has passed architecture validation, strict TypeScript,
 
 The container test additionally proves authenticated remote MCP through the single gateway, non-root Node/Chromium execution, a durable browser profile under `/data`, successful postcondition verification/effect reconciliation, and task persistence across container restart.
 
-Architecture v0.4.0 also adds and verifies a standards-based OAuth JWT resource-server mode for the future production ChatGPT connection while preserving the already-proven static-bearer mode for CI/bootstrap.
+Architecture v0.5.1 also adds and verifies a standards-based OAuth JWT resource-server mode for the future production ChatGPT connection while preserving the already-proven static-bearer mode for CI/bootstrap.
 
 It does not yet mean publicly deployed, OAuth-connected to a real issuer, real-account verified, or production-ready.
 
 ## Architecture lock
 
-Architecture version: **0.4.0**  
-Ledger head: **ARCH-0005**  
+Architecture version: **0.5.1**  
+Ledger head: **ARCH-0007**  
 Ledger head SHA-256: `cfa6276bf5a4de7b0a6dc3ce01fea110447ce1dc1e20acf6a15ddc750979b09a`
 
 Deployment/auth v1 is locked as:
@@ -62,6 +62,14 @@ GitHub Actions run `37418734195`, job `112123103743`, commit `b2126a0d04510393ab
 The run proved architecture v0.4.0 / ARCH-0005, OAuth protected-resource metadata generation, JWT signature/JWKS verification, exact issuer/audience/expiration/subject checks, required-scope enforcement, static-bearer compatibility, and the complete existing real-browser/container regression.
 
 Evidence: `evaluation/evidence/RUN-0004-oauth-resource-server-ci.md`.
+
+### RUN-0005 — current-head container regression
+
+GitHub Actions run `37421450416`, job `112131485834`, commit `69b3d805b44b318d96036c7ccdd63b2bb7ea10eb` — **PASS**.
+
+This run re-proved the current HEAD after the v0.5.x mobile-provider additions: architecture/typecheck/tests, real Playwright browser execution, Docker build, authenticated remote MCP navigation and verification, non-root Node/Chromium ownership, persistent browser profile storage, durable task state across container restart, and deterministic Xvfb bootstrap.
+
+Evidence: `evaluation/evidence/RUN-0005-container-regression-ci.md`.
 
 ## Deployment status
 

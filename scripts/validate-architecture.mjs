@@ -83,6 +83,17 @@ if (architecture.architecture_version !== lock.architecture_version) {
   throw new Error('architecture.yaml version does not match lock');
 }
 
+const workStatus = YAML.parse(read('work-packages/STATUS.yaml'));
+if (workStatus.project !== lock.project_id) {
+  throw new Error('work-packages/STATUS.yaml project does not match architecture lock');
+}
+if (workStatus.architecture_version !== lock.architecture_version) {
+  throw new Error('work-packages/STATUS.yaml architecture_version does not match architecture lock');
+}
+if (workStatus.ledger_head !== lock.ledger_head) {
+  throw new Error('work-packages/STATUS.yaml ledger_head does not match architecture lock');
+}
+
 const inv = YAML.parse(read('architecture/invariants.yaml'));
 const ids = inv.invariants.map(x => x.id);
 if (ids.length < 16 || new Set(ids).size !== ids.length) {
