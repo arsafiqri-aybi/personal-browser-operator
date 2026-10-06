@@ -3,6 +3,8 @@ project: personal-browser-operator
 strategy: dependency_first
 quality_mode: quality_floor_with_evidence
 highest_proven_state: REAL_BROWSER_VERIFIED
+architecture_version: "0.4.0"
+ledger_head: ARCH-0005
 evidence:
   real_browser_ci:
     workflow_run: 37410557580
@@ -21,6 +23,12 @@ evidence:
     commit: 52706256ee6ab4e3216f3d74323cc56e896f3329
     conclusion: PASS
     evidence_file: evaluation/evidence/RUN-0003-chatgpt-integration-source-ci.md
+  oauth_resource_server_ci:
+    workflow_run: 37418734195
+    job: 112123103743
+    commit: b2126a0d04510393abc00ab80b29b45269e5e87d
+    conclusion: PASS
+    evidence_file: evaluation/evidence/RUN-0004-oauth-resource-server-ci.md
 work_packages:
   WP-00: {name: Research & Environment Lock, status: PASS, depends_on: []}
   WP-01: {name: Architecture Genesis, status: PASS, depends_on: [WP-00]}
@@ -29,30 +37,29 @@ work_packages:
   WP-04: {name: Playwright Browser Kernel, status: REAL_BROWSER_VERIFIED, depends_on: [WP-03]}
   WP-05: {name: Persistent Identity & Session Vault, status: PERSISTENT_PROFILE_VERIFIED_SLICE, depends_on: [WP-04]}
   WP-06: {name: Observation & Grounding Engine, status: REAL_BROWSER_VERIFIED_SLICE, depends_on: [WP-04]}
-  WP-07: {name: MCP Gateway, status: REMOTE_MCP_CONTAINER_VERIFIED_UNDEPLOYED, depends_on: [WP-02, WP-03]}
+  WP-07: {name: MCP Gateway, status: REMOTE_MCP_DUAL_AUTH_VERIFIED_UNDEPLOYED, depends_on: [WP-02, WP-03]}
   WP-08: {name: Durable Task State Engine, status: CONTAINER_RESTART_VERIFIED_SLICE, depends_on: [WP-02, WP-03]}
   WP-09: {name: Action Policy & Risk Engine, status: VERIFIED_SLICE, depends_on: [WP-05, WP-08]}
   WP-10: {name: Execution Orchestrator, status: PARTIAL, depends_on: [WP-04, WP-06, WP-07, WP-08, WP-09]}
   WP-11: {name: Verification Engine, status: REMOTE_CONTAINER_VERIFIED_SLICE, depends_on: [WP-06, WP-08, WP-10]}
   WP-12: {name: Recovery & Replanning Engine, status: VERIFIED_SLICE, depends_on: [WP-10, WP-11]}
-  WP-13: {name: Instruction Firewall & Security, status: PARTIAL_VERIFIED, depends_on: [WP-07, WP-09, WP-10, WP-12]}
+  WP-13: {name: Instruction Firewall & Security, status: OAUTH_RESOURCE_SERVER_VERIFIED_SLICE, depends_on: [WP-07, WP-09, WP-10, WP-12]}
   WP-14: {name: Human Takeover, status: IMPLEMENTED_UNVERIFIED_LIVE, depends_on: [WP-05, WP-10]}
   WP-15: {name: Audit & Provenance, status: VERIFIED_SLICE, depends_on: [WP-02, WP-03]}
   WP-16: {name: Live Browser Console, status: IMPLEMENTED_UNVERIFIED_LIVE, depends_on: [WP-04, WP-14, WP-15]}
   WP-17: {name: Runtime Persistence & Recovery, status: CONTAINER_RESTART_VERIFIED_SLICE, depends_on: [WP-05, WP-08, WP-10, WP-15]}
-  WP-18: {name: Evaluation System, status: PASS_CONTAINER_RUNTIME_SLICE, depends_on: [WP-10, WP-11, WP-12, WP-13]}
-  WP-19: {name: Deployment & Secure Remote Access, status: CONTAINER_ARTIFACT_VERIFIED_UNDEPLOYED, depends_on: [WP-13, WP-17, WP-18]}
-  WP-20: {name: ChatGPT Surface Integration, status: SOURCE_VERIFIED_AWAITING_PUBLIC_MCP, depends_on: [WP-07, WP-17, WP-19]}
+  WP-18: {name: Evaluation System, status: PASS_OAUTH_AND_CONTAINER_RUNTIME_SLICE, depends_on: [WP-10, WP-11, WP-12, WP-13]}
+  WP-19: {name: Deployment & Secure Remote Access, status: CONTAINER_AND_OAUTH_ARTIFACT_VERIFIED_UNDEPLOYED, depends_on: [WP-13, WP-17, WP-18]}
+  WP-20: {name: ChatGPT Surface Integration, status: SOURCE_VERIFIED_AWAITING_PUBLIC_MCP_AND_OAUTH_ISSUER, depends_on: [WP-07, WP-17, WP-19]}
   WP-21: {name: Real Account Pilot, status: NOT_STARTED, depends_on: [WP-13, WP-18, WP-20]}
   WP-22: {name: Release Hardening, status: NOT_STARTED, depends_on: [WP-21]}
   WP-23: {name: Production Release, status: NOT_STARTED, depends_on: [WP-22]}
 next_critical_path:
   - provision persistent external execution host
-  - deploy verified headed Playwright container
-  - mount durable /data
-  - configure runtime secrets
-  - expose single authenticated HTTPS gateway
-  - public health and remote MCP smoke
+  - deploy verified headed Playwright container with durable /data
+  - provision external OAuth/OIDC issuer
+  - configure public origin + issuer + JWKS + audience + scope
+  - public health, metadata, and OAuth remote MCP smoke
   - prove same-browser noVNC takeover
-  - connect to ChatGPT surface
+  - render and create/connect private ChatGPT plugin
   - controlled authenticated real-account pilot
