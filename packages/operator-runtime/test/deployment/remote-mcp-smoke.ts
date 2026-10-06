@@ -94,7 +94,7 @@ try {
         actionId,
         expected: {
           titleIncludes: 'Example Domain',
-          textVisible: 'Example Domain'
+          textVisible: 'documentation examples'
         }
       }
     }));
