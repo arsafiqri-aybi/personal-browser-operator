@@ -2,6 +2,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { chromium, type BrowserContext, type Locator, type Page } from 'playwright';
 import { markUntrustedObservation } from './firewall.js';
+import { assertPublicHttpUrl } from './network-guard.js';
 import type { BrowserObservation, ElementRef } from './types.js';
 
 type RefDescriptor = ElementRef & { cssPath: string };
@@ -18,27 +19,6 @@ interface Session {
 function safeIdentityId(value: string): string {
   if (!/^[A-Za-z0-9._-]+$/.test(value)) throw new Error('INVALID_IDENTITY_ID');
   return value;
-}
-
-function isPrivateIPv4(host: string): boolean {
-  const parts = host.split('.').map(Number);
-  if (parts.length !== 4 || parts.some(n => !Number.isInteger(n) || n < 0 || n > 255)) return false;
-  if (parts[0] === 10 || parts[0] === 127) return true;
-  if (parts[0] === 192 && parts[1] === 168) return true;
-  if (parts[0] === 172 && parts[1] !== undefined && parts[1] >= 16 && parts[1] <= 31) return true;
-  if (parts[0] === 169 && parts[1] === 254) return true;
-  return false;
-}
-
-function assertSafeUrl(raw: string): URL {
-  const url = new URL(raw);
-  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('UNSUPPORTED_URL_PROTOCOL');
-  const host = url.hostname.toLowerCase();
-  const allowPrivate = process.env.PBO_ALLOW_PRIVATE_NETWORKS === 'true';
-  if (!allowPrivate && (host === 'localhost' || host === '::1' || host.endsWith('.local') || isPrivateIPv4(host))) {
-    throw new Error('PRIVATE_NETWORK_NAVIGATION_DENIED');
-  }
-  return url;
 }
 
 export class BrowserManager {
@@ -59,6 +39,29 @@ export class BrowserManager {
       headless,
       viewport: { width: 1440, height: 960 }
     });
+
+    if (process.env.PBO_ALLOW_PRIVATE_NETWORKS !== 'true') {
+      await context.route('**/*', async route => {
+        const request = route.request();
+        const rawUrl = request.url();
+        try {
+          const parsed = new URL(rawUrl);
+          if (!['http:', 'https:'].includes(parsed.protocol)) {
+            await route.continue();
+            return;
+          }
+          await assertPublicHttpUrl(rawUrl);
+          await route.continue();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (message === 'PRIVATE_NETWORK_NAVIGATION_DENIED') {
+            await route.abort('blockedbyclient');
+            return;
+          }
+          await route.abort('failed');
+        }
+      });
+    }
 
     const page = context.pages()[0] ?? await context.newPage();
     this.sessions.set(identityId, {
@@ -87,7 +90,7 @@ export class BrowserManager {
 
   async navigate(identityId: string, rawUrl: string): Promise<{ url: string; title: string }> {
     const session = this.session(identityId);
-    const url = assertSafeUrl(rawUrl);
+    const url = await assertPublicHttpUrl(rawUrl);
     await session.page.goto(url.toString(), { waitUntil: 'domcontentloaded' });
     this.invalidateObservedState(session);
     return { url: session.page.url(), title: await session.page.title() };
