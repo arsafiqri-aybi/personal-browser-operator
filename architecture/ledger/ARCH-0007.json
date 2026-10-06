@@ -1,0 +1,43 @@
+{
+  "entry_id": "ARCH-0007",
+  "architecture_version": "0.5.1",
+  "previous_entry_hash": "53fcebc1b1ea082b8b422f5f1106387748aa2bc17d8d2ba7f71df61e1862ca19",
+  "reason": "Harden the Android execution provider with an explicit package allowlist so accessibility observation and interaction fail closed outside user-approved applications.",
+  "affected_modules": [
+    "PBO-09",
+    "PBO-22"
+  ],
+  "affected_contracts": [
+    "android_execution_policy",
+    "mobile_agent_configuration"
+  ],
+  "protected_invariants_changed": false,
+  "required_tests": [
+    "mobile-package-allowlist",
+    "mobile-package-deny",
+    "mobile-stale-ref",
+    "mobile-password-approval"
+  ],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "architecture/architecture.yaml": "563e8e4137c1967e06c7c4a7695a7d88408a6e3d8e19393ca41873e46c1277ec",
+    "architecture/modules/registry.yaml": "bc884705a650856fd4cd76b8d87dc2f022566494270fb2e910df6a232fdd0653",
+    "architecture/adr/ADR-0009-android-package-allowlist.md": "36889f30746ee8a7ac761a3607982b19547581c88cb38666621b9a3e49260da2",
+    "mobile/android-agent/app/src/main/java/dev/pbo/mobile/OperatorAccessibilityService.kt": "2b545d6ad36e9a170d1bca9291d3ab728197fbdc06ba28fad5558cb0f4abf7c2",
+    "mobile/android-agent/app/src/main/java/dev/pbo/mobile/MainActivity.kt": "95163f99d6796f3e41a31f8e2bd6caa5dd8052fffc1790b7c5f79c409385dd23",
+    "docs/MOBILE_HOST.md": "fcec2bf4adb15da7dcf717439404370a7fadc5fb45520a9c8cd22c3aee714079"
+  },
+  "evidence": {
+    "package_access_policy": "explicit_allowlist_fail_closed",
+    "default_packages": [
+      "com.android.chrome",
+      "com.instagram.android",
+      "com.vivo.browser"
+    ],
+    "enforcement_points": [
+      "observe",
+      "interact"
+    ]
+  },
+  "entry_hash": "1fccdfbba4c1042702bffd6db72b7f2e8a6e3607275ca158db8d146d64f23fe3"
+}

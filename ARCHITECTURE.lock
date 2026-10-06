@@ -1,7 +1,7 @@
 schema_version=1.0.0
 project_id=personal-browser-operator
-architecture_version=0.5.0
+architecture_version=0.5.1
 genesis_sha256=f58826cedf602fd329402d32eb1973f57ef212bd46c73e30a3364d5529b927c6
-ledger_head=ARCH-0006
-ledger_head_sha256=53fcebc1b1ea082b8b422f5f1106387748aa2bc17d8d2ba7f71df61e1862ca19
+ledger_head=ARCH-0007
+ledger_head_sha256=1fccdfbba4c1042702bffd6db72b7f2e8a6e3607275ca158db8d146d64f23fe3
 status=LOCKED

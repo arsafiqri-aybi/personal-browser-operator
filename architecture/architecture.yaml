@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-architecture_version: "0.5.0"
+architecture_version: "0.5.1"
 status: LOCKED
 control_loop:
   - STATE
@@ -45,6 +45,7 @@ runtime_host:
       kernel: accessibility_service
       ingress: outbound_device_connection_only
       sensitive_input: explicit_approval_required
+      package_access: explicit_allowlist_fail_closed
   mcp_authentication:
     bootstrap: static_bearer
     production: oauth_resource_server
