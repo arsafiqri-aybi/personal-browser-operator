@@ -1,4 +1,4 @@
-# Mobile Host — Android execution provider
+# Mobile Host - Android execution provider
 
 ## Goal
 
@@ -22,6 +22,8 @@ The phone initiates the WebSocket. No inbound port, public IP, VPN, or direct de
   - `DEVICE_TOKEN`: Android -> relay.
   - `CONTROL_TOKEN`: MCP/runtime -> relay.
 - Set `DEVICE_ID` on the Worker to allow only one device when possible.
+- The Android agent has a package allowlist and refuses to observe or target an active application outside that list.
+- The default allowlist is `com.android.chrome,com.instagram.android,com.vivo.browser`; edit it in the app before enabling the accessibility service if needed.
 - Password nodes are redacted from observations.
 - Filling a password node requires `approved=true`; otherwise the Android agent returns `SENSITIVE_INPUT_REQUIRES_APPROVAL`.
 - Refs are ephemeral and bound to `stateVersion`. Every mutation invalidates them.
@@ -50,9 +52,10 @@ Open `mobile/android-agent` in Android Studio, build/install it on the phone, th
 2. Enter the Worker URL.
 3. Enter the same Device ID used by the MCP calls.
 4. Enter `DEVICE_TOKEN`.
-5. Save.
-6. Open Accessibility Settings.
-7. Enable **Personal Browser Operator Mobile Agent**.
+5. Confirm the package allowlist.
+6. Save.
+7. Open Accessibility Settings.
+8. Enable **Personal Browser Operator Mobile Agent**.
 
 The app does not need the Cloudflare control token.
 
@@ -88,8 +91,8 @@ https://<your-runtime-host>/mcp
 - `mobile_device_status`
 - `mobile_observe`
 - `mobile_open_url`
-- `mobile_interact` — click/fill
-- `mobile_global_action` — BACK/HOME/RECENTS
+- `mobile_interact` - click/fill
+- `mobile_global_action` - BACK/HOME/RECENTS
 - `mobile_verify`
 - `mobile_takeover`
 - `mobile_resume`

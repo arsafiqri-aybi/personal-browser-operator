@@ -45,6 +45,17 @@ class MainActivity : Activity() {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
+        val allowedPackages = EditText(this).apply {
+            hint = "Allowed packages, comma separated"
+            setText(
+                prefs.getString(
+                    "allowed_packages",
+                    "com.android.chrome,com.instagram.android,com.vivo.browser"
+                ) ?: "com.android.chrome,com.instagram.android,com.vivo.browser"
+            )
+            inputType = InputType.TYPE_CLASS_TEXT
+        }
+
         val save = Button(this).apply {
             text = "Save connection"
             setOnClickListener {
@@ -52,6 +63,7 @@ class MainActivity : Activity() {
                     .putString("relay_url", relay.text.toString().trim().trimEnd('/'))
                     .putString("device_id", device.text.toString().trim())
                     .putString("device_token", token.text.toString())
+                    .putString("allowed_packages", allowedPackages.text.toString().trim())
                     .apply()
             }
         }
@@ -66,6 +78,7 @@ class MainActivity : Activity() {
         val note = TextView(this).apply {
             text = "Enable the PBO Mobile Agent accessibility service after saving. " +
                 "The agent only accepts commands through the configured authenticated relay. " +
+                "Only allowlisted app packages may be observed or targeted. " +
                 "Password fields require an explicitly approved command."
         }
 
@@ -73,6 +86,7 @@ class MainActivity : Activity() {
         root.addView(relay, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         root.addView(device, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         root.addView(token, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        root.addView(allowedPackages, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         root.addView(save)
         root.addView(accessibility)
         root.addView(note)

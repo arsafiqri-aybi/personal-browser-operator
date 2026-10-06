@@ -22,6 +22,7 @@ class OperatorAccessibilityService : AccessibilityService() {
     private var stateVersion: String? = null
     private var relay: RelayClient? = null
     private var deviceId: String = ""
+    private var allowedPackages: Set<String> = emptySet()
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -29,6 +30,12 @@ class OperatorAccessibilityService : AccessibilityService() {
         val relayUrl = prefs.getString("relay_url", "") ?: ""
         deviceId = prefs.getString("device_id", "vivo-v20-se") ?: "vivo-v20-se"
         val token = prefs.getString("device_token", "") ?: ""
+        allowedPackages = parseAllowedPackages(
+            prefs.getString(
+                "allowed_packages",
+                "com.android.chrome,com.instagram.android,com.vivo.browser"
+            ) ?: "com.android.chrome,com.instagram.android,com.vivo.browser"
+        )
 
         relay?.close()
         relay = RelayClient(relayUrl, deviceId, token) { command ->
@@ -44,6 +51,22 @@ class OperatorAccessibilityService : AccessibilityService() {
         relay?.close()
         clearRefs()
         super.onDestroy()
+    }
+
+    private fun parseAllowedPackages(raw: String): Set<String> {
+        return raw.split(",")
+            .map { it.trim() }
+            .filter { it.matches(Regex("^[A-Za-z0-9_.]+$")) }
+            .toSet()
+    }
+
+    private fun requireAllowedPackage(packageName: String) {
+        if (allowedPackages.isEmpty()) {
+            throw SecurityException("PACKAGE_ALLOWLIST_EMPTY")
+        }
+        if (!allowedPackages.contains(packageName)) {
+            throw SecurityException("PACKAGE_NOT_ALLOWED:$packageName")
+        }
     }
 
     private fun executeCommand(command: JSONObject) {
@@ -80,6 +103,9 @@ class OperatorAccessibilityService : AccessibilityService() {
 
     private fun observe(): JSONObject {
         val root = rootInActiveWindow ?: throw IllegalStateException("NO_ACTIVE_WINDOW")
+        val packageName = root.packageName?.toString() ?: ""
+        requireAllowedPackage(packageName)
+
         clearRefs()
         stateCounter += 1
         stateVersion = "$deviceId:$stateCounter:" + System.currentTimeMillis()
@@ -141,7 +167,7 @@ class OperatorAccessibilityService : AccessibilityService() {
             .put("observationId", "MOBS-" + UUID.randomUUID())
             .put("deviceId", deviceId)
             .put("stateVersion", stateVersion)
-            .put("packageName", root.packageName?.toString() ?: "")
+            .put("packageName", packageName)
             .put("windowClass", root.className?.toString() ?: "")
             .put("textSnapshot", visibleText.toString().take(12000))
             .put("interactiveElements", elements)
@@ -161,6 +187,9 @@ class OperatorAccessibilityService : AccessibilityService() {
     }
 
     private fun interact(payload: JSONObject, approved: Boolean): JSONObject {
+        val root = rootInActiveWindow ?: throw IllegalStateException("NO_ACTIVE_WINDOW")
+        requireAllowedPackage(root.packageName?.toString() ?: "")
+
         val node = requireFreshRef(payload)
         val operation = payload.optString("operation")
         val value = if (payload.has("value")) payload.optString("value") else null
