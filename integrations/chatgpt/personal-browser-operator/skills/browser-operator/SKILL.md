@@ -38,6 +38,17 @@ Do not claim success from an action call alone.
 
 ## Planning and big-picture continuity
 
+### Task-wide contract
+
+Treat `browser_task_state` as the authoritative execution contract, not merely a progress note:
+
+- `protectedConstraints`: durable user boundaries that planning must preserve;
+- `allowedDomains`: when non-empty, direct navigation outside these domains is rejected by runtime;
+- `riskProfile`: hard per-task maximum risk; explicit action approval does not override it;
+- `acceptanceCriteria`: conditions that planning and verification must cover before claiming the user goal is complete.
+
+
+
 Before a multi-step workflow starts acting:
 
 - read `browser_task_state`;

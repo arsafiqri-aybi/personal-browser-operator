@@ -13,6 +13,7 @@ export interface AuthorizationRequest {
   taskId: string;
   intent: string;
   riskClass: RiskClass;
+  taskRiskMax?: RiskClass;
   approved?: boolean;
 }
 
@@ -25,6 +26,15 @@ export class PolicyEngine {
   authorize(req: AuthorizationRequest): AuthorizationResult {
     if (!req.taskId || !req.intent.trim()) {
       return { allowed: false, reason: 'ACTION_INTENT_BINDING_REQUIRED' };
+    }
+
+    if (req.taskRiskMax !== undefined) {
+      if (!(req.taskRiskMax in order)) {
+        return { allowed: false, reason: 'INVALID_TASK_RISK_PROFILE' };
+      }
+      if (order[req.riskClass] > order[req.taskRiskMax]) {
+        return { allowed: false, reason: `TASK_RISK_PROFILE_EXCEEDED_${req.taskRiskMax}` };
+      }
     }
 
     const automaticMax = (process.env.PBO_AUTO_RISK ?? 'R2') as RiskClass;

@@ -37,13 +37,28 @@ test('MCP contract exposes task, effect and verification tools', async () => {
 
   const started = await client.callTool({
     name: 'browser_task_start',
-    arguments: { goal: 'Contract-test goal' }
+    arguments: {
+      goal: 'Contract-test goal',
+      protectedConstraints: ['Do not leave the allowed domain'],
+      allowedDomains: ['example.com'],
+      riskProfile: 'R1',
+      acceptanceCriteria: ['Inspect current page state']
+    }
   });
   const firstText = started.content.find(block => block.type === 'text');
   assert.ok(firstText && firstText.type === 'text');
-  const task = JSON.parse(firstText.text) as { taskId: string; status: string };
+  const task = JSON.parse(firstText.text) as {
+    taskId: string;
+    status: string;
+    allowedDomains: string[];
+    riskProfile: string;
+    acceptanceCriteria: string[];
+  };
   assert.match(task.taskId, /^TASK-/);
   assert.equal(task.status, 'ACTIVE');
+  assert.deepEqual(task.allowedDomains, ['example.com']);
+  assert.equal(task.riskProfile, 'R1');
+  assert.deepEqual(task.acceptanceCriteria, ['Inspect current page state']);
 
   const planned = await client.callTool({
     name: 'browser_plan_next',
@@ -71,6 +86,58 @@ test('MCP contract exposes task, effect and verification tools', async () => {
   const resolvedPayload = JSON.parse(resolvedText.text) as { currentSubgoal: string | null; completedSubgoals: string[] };
   assert.equal(resolvedPayload.currentSubgoal, null);
   assert.ok(resolvedPayload.completedSubgoals.includes('Inspect current page state'));
+
+  textPayload(await client.callTool({
+    name: 'browser_plan_next',
+    arguments: {
+      taskId: task.taskId,
+      subgoal: 'Stay inside the allowed domain',
+      decisionSummary: 'Exercise deterministic contract boundaries before browser execution.'
+    }
+  }));
+
+  const domainDenied = await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      actionId: 'ACT-contract-domain-denied',
+      taskId: task.taskId,
+      identityId: 'identity-not-open',
+      subgoal: 'Stay inside the allowed domain',
+      intent: 'Attempt navigation outside the task domain boundary',
+      url: 'https://iana.org/',
+      riskClass: 'R1'
+    }
+  });
+  assert.equal(domainDenied.isError, true);
+  const domainDeniedText = domainDenied.content.find(block => block.type === 'text');
+  assert.ok(domainDeniedText && domainDeniedText.type === 'text');
+  assert.match(domainDeniedText.text, /DOMAIN_NOT_ALLOWED_BY_TASK/);
+
+  const riskDenied = await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      actionId: 'ACT-contract-risk-denied',
+      taskId: task.taskId,
+      identityId: 'identity-not-open',
+      subgoal: 'Stay inside the allowed domain',
+      intent: 'Attempt an action above the task risk ceiling',
+      url: 'https://example.com/',
+      riskClass: 'R2',
+      approved: true
+    }
+  });
+  assert.equal(riskDenied.isError, undefined);
+  const riskDeniedText = riskDenied.content.find(block => block.type === 'text');
+  assert.ok(riskDeniedText && riskDeniedText.type === 'text');
+  assert.match(riskDeniedText.text, /TASK_RISK_PROFILE_EXCEEDED_R1/);
+
+  textPayload(await client.callTool({
+    name: 'browser_subgoal_update',
+    arguments: {
+      taskId: task.taskId,
+      outcome: 'COMPLETE'
+    }
+  }));
 
   const stalePlanAction = await client.callTool({
     name: 'browser_navigate',

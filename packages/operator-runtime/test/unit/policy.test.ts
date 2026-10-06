@@ -36,3 +36,20 @@ test('policy rejects missing task-intent binding', () => {
   assert.equal(result.allowed, false);
   assert.equal(result.reason, 'ACTION_INTENT_BINDING_REQUIRED');
 });
+
+
+test('task risk ceiling is a hard bound even when global auto risk is higher', () => {
+  process.env.PBO_AUTO_RISK = 'R5';
+  const policy = new PolicyEngine();
+
+  assert.deepEqual(
+    policy.authorize({
+      taskId: 'TASK-risk-bound',
+      intent: 'Perform bounded action',
+      riskClass: 'R3',
+      taskRiskMax: 'R1',
+      approved: true
+    }),
+    { allowed: false, reason: 'TASK_RISK_PROFILE_EXCEEDED_R1' }
+  );
+});

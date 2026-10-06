@@ -12,6 +12,10 @@ export interface TaskState {
   revision: number;
   goal: string;
   deliverable: string | null;
+  protectedConstraints: string[];
+  allowedDomains: string[];
+  riskProfile: RiskClass;
+  acceptanceCriteria: string[];
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;

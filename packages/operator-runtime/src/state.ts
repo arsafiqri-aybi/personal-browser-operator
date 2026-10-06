@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { TaskState, TaskStatus } from './types.js';
+import type { RiskClass, TaskState, TaskStatus } from './types.js';
 
 function dataRoot(): string {
   return process.env.PBO_DATA_DIR || path.resolve('runtime-data');
@@ -14,6 +14,18 @@ function taskDir(): string {
 function safeTaskId(taskId: string): string {
   if (!/^TASK-[A-Za-z0-9_-]+$/.test(taskId)) throw new Error('INVALID_TASK_ID');
   return taskId;
+}
+
+function cleanList(values: string[]): string[] {
+  return [...new Set(values.map(value => value.trim()).filter(Boolean))];
+}
+
+function normalizeDomain(value: string): string {
+  const domain = value.trim().toLowerCase().replace(/\.$/, '');
+  if (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/.test(domain)) {
+    throw new Error('INVALID_ALLOWED_DOMAIN');
+  }
+  return domain;
 }
 
 export class TaskStore {
@@ -32,8 +44,16 @@ export class TaskStore {
     for (const name of fs.readdirSync(taskDir())) {
       if (!name.endsWith('.json')) continue;
       try {
-        const parsed = JSON.parse(fs.readFileSync(path.join(taskDir(), name), 'utf8')) as TaskState;
-        safeTaskId(parsed.taskId);
+        const raw = JSON.parse(fs.readFileSync(path.join(taskDir(), name), 'utf8')) as Partial<TaskState>;
+        if (!raw.taskId) throw new Error('INVALID_PERSISTED_TASK');
+        safeTaskId(raw.taskId);
+        const parsed = {
+          ...raw,
+          protectedConstraints: cleanList(raw.protectedConstraints ?? []),
+          allowedDomains: (raw.allowedDomains ?? []).map(normalizeDomain),
+          riskProfile: raw.riskProfile ?? 'R2',
+          acceptanceCriteria: cleanList(raw.acceptanceCriteria ?? [])
+        } as TaskState;
         this.tasks.set(parsed.taskId, parsed);
       } catch {
         // Corrupt files are deliberately not promoted into authoritative state.
@@ -58,13 +78,24 @@ export class TaskStore {
     return structuredClone(task);
   }
 
-  start(goal: string, deliverable?: string): TaskState {
+  start(
+    goal: string,
+    deliverable?: string,
+    protectedConstraints: string[] = [],
+    allowedDomains: string[] = [],
+    riskProfile: RiskClass = 'R2',
+    acceptanceCriteria: string[] = []
+  ): TaskState {
     const now = new Date().toISOString();
     const task: TaskState = {
       taskId: `TASK-${crypto.randomUUID()}`,
       revision: 1,
       goal,
       deliverable: deliverable ?? null,
+      protectedConstraints: cleanList(protectedConstraints),
+      allowedDomains: cleanList(allowedDomains).map(normalizeDomain),
+      riskProfile,
+      acceptanceCriteria: cleanList(acceptanceCriteria),
       status: 'ACTIVE',
       createdAt: now,
       updatedAt: now,

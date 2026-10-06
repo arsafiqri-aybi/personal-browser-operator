@@ -35,12 +35,19 @@ function safelyFailedCategory(category: string): boolean {
   return ['TARGET_NOT_FOUND', 'STALE_STATE', 'AMBIGUOUS_STATE', 'POLICY_DENIED'].includes(category);
 }
 
-function requireSubgoalBinding(taskId: string, suppliedSubgoal: string): string {
+function requireSubgoalBinding(taskId: string, suppliedSubgoal: string) {
   const task = tasks.get(taskId);
   const active = task.currentSubgoal?.trim();
   if (!active) throw new Error('ACTIVE_SUBGOAL_REQUIRED');
   if (active !== suppliedSubgoal.trim()) throw new Error('SUBGOAL_BINDING_MISMATCH');
-  return active;
+  return task;
+}
+
+function assertTaskDomainAllowed(allowedDomains: string[], rawUrl: string): void {
+  if (allowedDomains.length === 0) return;
+  const host = new URL(rawUrl).hostname.toLowerCase().replace(/\.$/, '');
+  const allowed = allowedDomains.some(domain => host === domain || host.endsWith('.' + domain));
+  if (!allowed) throw new Error('DOMAIN_NOT_ALLOWED_BY_TASK');
 }
 
 export function createOperatorServer(): McpServer {
@@ -56,12 +63,16 @@ export function createOperatorServer(): McpServer {
       description: 'Start a durable browser task from the user high-level goal. Does not perform browser side effects.',
       inputSchema: z.object({
         goal: z.string().min(1),
-        deliverable: z.string().optional()
+        deliverable: z.string().optional(),
+        protectedConstraints: z.array(z.string().min(1).max(500)).max(50).default([]),
+        allowedDomains: z.array(z.string().min(1).max(253)).max(50).default([]),
+        riskProfile: z.enum(['R0','R1','R2','R3','R4','R5']).default('R2'),
+        acceptanceCriteria: z.array(z.string().min(1).max(500)).max(30).default([])
       })
     },
-    async ({ goal, deliverable }) => {
+    async ({ goal, deliverable, protectedConstraints, allowedDomains, riskProfile, acceptanceCriteria }) => {
       try {
-        const task = tasks.start(goal, deliverable);
+        const task = tasks.start(goal, deliverable, protectedConstraints, allowedDomains, riskProfile, acceptanceCriteria);
         audit.append({ eventType: 'TASK_STARTED', taskId: task.taskId, summary: 'User browser task created.' });
         return result(task);
       } catch (e) {
@@ -214,8 +225,10 @@ export function createOperatorServer(): McpServer {
     },
     async ({ actionId, taskId, identityId, subgoal, intent, url, riskClass, approved }) => {
       try {
-        const activeSubgoal = requireSubgoalBinding(taskId, subgoal);
-        const auth = policy.authorize({ taskId, intent, riskClass, approved });
+        const task = requireSubgoalBinding(taskId, subgoal);
+        const activeSubgoal = task.currentSubgoal as string;
+        assertTaskDomainAllowed(task.allowedDomains, url);
+        const auth = policy.authorize({ taskId, intent, riskClass, taskRiskMax: task.riskProfile, approved });
         if (!auth.allowed) {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
           return result({ status: 'DENIED', authorization: auth });
@@ -265,8 +278,9 @@ export function createOperatorServer(): McpServer {
     },
     async ({ actionId, taskId, identityId, subgoal, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
       try {
-        const activeSubgoal = requireSubgoalBinding(taskId, subgoal);
-        const auth = policy.authorize({ taskId, intent, riskClass, approved });
+        const task = requireSubgoalBinding(taskId, subgoal);
+        const activeSubgoal = task.currentSubgoal as string;
+        const auth = policy.authorize({ taskId, intent, riskClass, taskRiskMax: task.riskProfile, approved });
         if (!auth.allowed) {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
           return result({ status: 'DENIED', authorization: auth });

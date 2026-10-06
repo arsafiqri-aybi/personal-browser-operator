@@ -90,3 +90,31 @@ test('planner subgoal lifecycle persists big-picture progress without hidden rea
 
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+
+test('task contract preserves constraints, domains, risk and acceptance criteria', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pbo-contract-'));
+  process.env.PBO_DATA_DIR = root;
+
+  const first = new TaskStore();
+  const created = first.start(
+    'Research and verify an item',
+    'Verified result',
+    ['Do not purchase anything', 'Do not purchase anything'],
+    ['Example.COM'],
+    'R1',
+    ['Title is verified', 'Visible evidence is captured']
+  );
+
+  assert.deepEqual(created.protectedConstraints, ['Do not purchase anything']);
+  assert.deepEqual(created.allowedDomains, ['example.com']);
+  assert.equal(created.riskProfile, 'R1');
+  assert.deepEqual(created.acceptanceCriteria, ['Title is verified', 'Visible evidence is captured']);
+
+  const restored = new TaskStore().get(created.taskId);
+  assert.deepEqual(restored.allowedDomains, ['example.com']);
+  assert.equal(restored.riskProfile, 'R1');
+  assert.deepEqual(restored.acceptanceCriteria, created.acceptanceCriteria);
+
+  fs.rmSync(root, { recursive: true, force: true });
+});
