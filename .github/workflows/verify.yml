@@ -1,0 +1,42 @@
+name: Verify Personal Browser Operator
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PBO_DATA_DIR: ${{ runner.temp }}/pbo-data
+      PBO_HEADLESS: "true"
+      PBO_ALLOW_PRIVATE_NETWORKS: "false"
+      PBO_AUTO_RISK: R2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Architecture and deterministic verification
+        run: npm test
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Real browser smoke test
+        run: npm run test:browser
