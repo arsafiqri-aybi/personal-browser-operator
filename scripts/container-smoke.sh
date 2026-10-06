@@ -87,12 +87,16 @@ awk -v uid="$PWUSER_UID" '
   NR > 1 && $1 == uid && ($3 ~ /chrome|chromium/ || $0 ~ /(chrome|chromium)/) { found=1 }
   END { exit found ? 0 : 1 }
 ' /tmp/pbo-container-top.txt
+echo "PBO_PROCESS_OWNERSHIP_OK=PASS"
 
 docker exec "$NAME" test -d /data/profiles/ci-container
+echo "PBO_PROFILE_PRESENT_BEFORE_RESTART=PASS"
 docker rm -f "$NAME" >/dev/null
+echo "PBO_FIRST_CONTAINER_STOPPED=PASS"
 
 start_container
 wait_health
+echo "PBO_RESTART_HEALTH_OK=PASS"
 
 PBO_REMOTE_URL="http://127.0.0.1:${PUBLIC_PORT}" \
 PBO_MCP_TOKEN="$MCP_TOKEN" \
@@ -100,5 +104,6 @@ PBO_TEST_TASK_ID="$TASK_ID" \
 npm -w @pbo/operator-runtime run --silent test:remote-container
 
 docker exec "$NAME" test -d /data/profiles/ci-container
+echo "PBO_PROFILE_PRESENT_AFTER_RESTART=PASS"
 
 echo "PBO_CONTAINER_SMOKE=PASS"
