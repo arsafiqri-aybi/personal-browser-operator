@@ -16,7 +16,7 @@ It does not yet mean publicly deployed, OAuth-connected to a real issuer, real-a
 
 Architecture version: **0.5.1**  
 Ledger head: **ARCH-0007**  
-Ledger head SHA-256: `cfa6276bf5a4de7b0a6dc3ce01fea110447ce1dc1e20acf6a15ddc750979b09a`
+Ledger head SHA-256: `1fccdfbba4c1042702bffd6db72b7f2e8a6e3607275ca158db8d146d64f23fe3`
 
 Deployment/auth v1 is locked as:
 
