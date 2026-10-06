@@ -103,8 +103,9 @@ test('oauth verifier enforces JWT signature issuer audience expiration and scope
     assert.ok(good.scopes.includes('pbo:mcp'));
     assert.ok(good.expiresAt > Math.floor(Date.now() / 1000));
 
+    const insufficientScope = await sign('openid');
     await assert.rejects(
-      () => verifier.verify(sign('openid').then(x => x)),
+      () => verifier.verify(insufficientScope),
       (error: unknown) =>
         error instanceof OAuthAccessError &&
         error.code === 'insufficient_scope' &&
