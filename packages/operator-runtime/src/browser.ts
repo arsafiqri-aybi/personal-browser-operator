@@ -79,10 +79,16 @@ export class BrowserManager {
     return session;
   }
 
+  private invalidateObservedState(session: Session): void {
+    session.stateVersion = null;
+    session.refs.clear();
+  }
+
   async navigate(identityId: string, rawUrl: string): Promise<{ url: string; title: string }> {
     const session = this.session(identityId);
     const url = assertSafeUrl(rawUrl);
     await session.page.goto(url.toString(), { waitUntil: 'domcontentloaded' });
+    this.invalidateObservedState(session);
     return { url: session.page.url(), title: await session.page.title() };
   }
 
@@ -122,7 +128,8 @@ export class BrowserManager {
         const explicitRole = el.getAttribute('role');
         let role = explicitRole || tag;
         if (!explicitRole) {
-          if (tag === 'a') role = 'link';
+          if (el.getAttribute('contenteditable') === 'true') role = 'textbox';
+          else if (tag === 'a') role = 'link';
           else if (tag === 'button') role = 'button';
           else if (tag === 'textarea') role = 'textbox';
           else if (tag === 'select') role = 'combobox';
@@ -179,22 +186,34 @@ export class BrowserManager {
     };
   }
 
-  private resolve(identityId: string, stateVersion: string, ref: string): Locator {
+  private async resolve(identityId: string, stateVersion: string, ref: string): Promise<Locator> {
     const session = this.session(identityId);
     if (!session.stateVersion || session.stateVersion !== stateVersion) throw new Error('STALE_STATE');
     const descriptor = session.refs.get(ref);
     if (!descriptor) throw new Error('TARGET_NOT_FOUND');
 
     if (descriptor.role && descriptor.name) {
-      return session.page.getByRole(descriptor.role as any, { name: descriptor.name, exact: true }).first();
+      try {
+        const candidate = session.page.getByRole(descriptor.role as any, { name: descriptor.name, exact: true });
+        if (await candidate.count() === 1) return candidate;
+      } catch {
+        // Fall back to the exact observed DOM path.
+      }
     }
+
     if (descriptor.placeholder) {
-      return session.page.getByPlaceholder(descriptor.placeholder, { exact: true }).first();
+      const candidate = session.page.getByPlaceholder(descriptor.placeholder, { exact: true });
+      if (await candidate.count() === 1) return candidate;
     }
+
     if (descriptor.name) {
-      return session.page.getByText(descriptor.name, { exact: true }).first();
+      const candidate = session.page.getByText(descriptor.name, { exact: true });
+      if (await candidate.count() === 1) return candidate;
     }
-    return session.page.locator(descriptor.cssPath).first();
+
+    const fallback = session.page.locator(descriptor.cssPath);
+    if (await fallback.count() !== 1) throw new Error('AMBIGUOUS_OR_STALE_TARGET');
+    return fallback;
   }
 
   async interact(
@@ -204,7 +223,8 @@ export class BrowserManager {
     operation: 'click' | 'fill' | 'press' | 'select' | 'hover',
     value?: string
   ): Promise<{ operation: string; targetRef: string; needsReobserve: true }> {
-    const locator = this.resolve(identityId, stateVersion, ref);
+    const session = this.session(identityId);
+    const locator = await this.resolve(identityId, stateVersion, ref);
 
     switch (operation) {
       case 'click':
@@ -227,6 +247,7 @@ export class BrowserManager {
         break;
     }
 
+    this.invalidateObservedState(session);
     return { operation, targetRef: ref, needsReobserve: true };
   }
 

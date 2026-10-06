@@ -14,4 +14,9 @@
 - WP-09 Policy Engine — INITIAL RISK GATE IMPLEMENTED
 - WP-10+ — NOT COMPLETE
 
+## Verification findings
+
+- VFY-001: fixed stale-state reuse after browser mutations. Navigation and interaction now invalidate observation refs and force a fresh observation before the next ref-bound action.
+- VFY-002: tightened ambiguous semantic target handling. A semantic locator is used only when it resolves uniquely; otherwise the observed DOM path is checked and ambiguous/stale targets fail closed.
+
 No claim of real-browser verification or production readiness is made yet.
