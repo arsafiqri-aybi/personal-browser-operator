@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pbo://contracts/effect.schema.json",
+  "title": "EffectRecord",
+  "type": "object",
+  "required": ["action_id", "task_id", "identity_id", "intent", "operation", "status", "created_at", "updated_at"],
+  "properties": {
+    "action_id": {"type": "string", "pattern": "^ACT-[A-Za-z0-9_-]+$"},
+    "task_id": {"type": "string"},
+    "identity_id": {"type": "string"},
+    "intent": {"type": "string"},
+    "operation": {"type": "string"},
+    "status": {"enum": ["EXECUTING", "EXECUTED_UNVERIFIED", "VERIFIED_PASS", "VERIFIED_FAIL", "FAILED_SAFE", "UNKNOWN_EFFECT"]},
+    "error": {"type": ["string", "null"]},
+    "verification_id": {"type": ["string", "null"]},
+    "created_at": {"type": "string"},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

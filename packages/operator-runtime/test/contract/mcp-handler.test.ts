@@ -6,7 +6,7 @@ import test from 'node:test';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 
-test('MCP contract exposes task tools and persists task state', async () => {
+test('MCP contract exposes task, effect and verification tools', async () => {
   process.env.PBO_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'pbo-mcp-'));
 
   const { createOperatorServer } = await import('../../src/factory.js');
@@ -14,9 +14,7 @@ test('MCP contract exposes task tools and persists task state', async () => {
 
   const transport = new StreamableHTTPClientTransport(
     new URL('http://test.local/mcp'),
-    {
-      fetch: (url, init) => handler.fetch(new Request(url, init))
-    }
+    { fetch: (url, init) => handler.fetch(new Request(url, init)) }
   );
 
   const client = new Client({ name: 'pbo-contract-test', version: '1.0.0' });
@@ -24,11 +22,16 @@ test('MCP contract exposes task tools and persists task state', async () => {
 
   const list = await client.listTools();
   const names = new Set(list.tools.map(tool => tool.name));
-  assert.ok(names.has('browser_task_start'));
-  assert.ok(names.has('browser_task_state'));
-  assert.ok(names.has('browser_observe'));
-  assert.ok(names.has('browser_verify'));
-  assert.ok(names.has('browser_task_complete'));
+  for (const required of [
+    'browser_task_start',
+    'browser_task_state',
+    'browser_observe',
+    'browser_navigate',
+    'browser_interact',
+    'browser_verify',
+    'browser_effect_state',
+    'browser_task_complete'
+  ]) assert.ok(names.has(required), required);
 
   const started = await client.callTool({
     name: 'browser_task_start',

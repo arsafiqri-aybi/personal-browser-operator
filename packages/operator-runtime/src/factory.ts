@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import { AuditLedger } from './audit.js';
 import { BrowserManager } from './browser.js';
+import { duplicateEffectResponse, EffectStore } from './effects.js';
 import { PolicyEngine } from './policy.js';
 import { recoveryDecision } from './recovery.js';
 import { TaskStore } from './state.js';
@@ -12,6 +13,7 @@ const tasks = new TaskStore();
 const browsers = new BrowserManager();
 const policy = new PolicyEngine();
 const audit = new AuditLedger();
+const effects = new EffectStore();
 const verifications = new VerificationStore();
 const takeover = new TakeoverManager(tasks);
 
@@ -29,11 +31,15 @@ function error(err: unknown) {
   };
 }
 
+function safelyFailedCategory(category: string): boolean {
+  return ['TARGET_NOT_FOUND', 'STALE_STATE', 'AMBIGUOUS_STATE', 'POLICY_DENIED'].includes(category);
+}
+
 export function createOperatorServer(): McpServer {
   const server = new McpServer({
     name: 'personal-browser-operator',
-    version: '0.3.0',
-    description: 'Private task-aware Playwright browser operator with durable state, policy, verification, recovery and audit.'
+    version: '0.4.0',
+    description: 'Private task-aware Playwright browser operator with durable state, effect idempotency, policy, verification, recovery and audit.'
   });
 
   server.registerTool(
@@ -124,8 +130,9 @@ export function createOperatorServer(): McpServer {
   server.registerTool(
     'browser_navigate',
     {
-      description: 'Navigate a task-bound browser to a public HTTP(S) URL. Private-network destinations are denied by default.',
+      description: 'Navigate once under a caller-supplied stable actionId. Reusing the same actionId suppresses duplicate execution and returns the prior effect record.',
       inputSchema: z.object({
+        actionId: z.string().regex(/^ACT-[A-Za-z0-9_-]+$/),
         taskId: z.string().min(1),
         identityId: z.string().min(1),
         intent: z.string().min(1),
@@ -134,7 +141,7 @@ export function createOperatorServer(): McpServer {
         approved: z.boolean().optional()
       })
     },
-    async ({ taskId, identityId, intent, url, riskClass, approved }) => {
+    async ({ actionId, taskId, identityId, intent, url, riskClass, approved }) => {
       try {
         tasks.get(taskId);
         const auth = policy.authorize({ taskId, intent, riskClass, approved });
@@ -142,14 +149,27 @@ export function createOperatorServer(): McpServer {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
           return result({ status: 'DENIED', authorization: auth });
         }
-        const navigation = await browsers.navigate(identityId, url);
-        audit.append({ eventType: 'NAVIGATED', taskId, identityId, summary: `Navigation executed for task intent: ${intent.slice(0, 180)}` });
-        return result({ status: 'EXECUTED', authorization: auth, navigation, verificationRequired: true, requiresFreshObservation: true });
+
+        const begun = effects.begin({ actionId, taskId, identityId, intent, operation: 'navigate' });
+        if (begun.duplicate) {
+          audit.append({ eventType: 'DUPLICATE_ACTION_SUPPRESSED', taskId, identityId, summary: `Duplicate ${actionId} not re-executed.` });
+          return result(duplicateEffectResponse(begun.record));
+        }
+
+        try {
+          const navigation = await browsers.navigate(identityId, url);
+          const effect = effects.executed(actionId);
+          audit.append({ eventType: 'NAVIGATED', taskId, identityId, summary: `Navigation executed for ${actionId}.` });
+          return result({ status: 'EXECUTED_UNVERIFIED', authorization: auth, navigation, effect, verificationRequired: true, requiresFreshObservation: true });
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
+          const recovery = recoveryDecision(message, 'navigate');
+          const effect = effects.failed(actionId, message, !safelyFailedCategory(recovery.category));
+          audit.append({ eventType: 'ACTION_FAILED', taskId, identityId, summary: `${actionId}: ${message}; recovery=${recovery.category}` });
+          return result({ status: effect.status, error: message, effect, recovery });
+        }
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        const recovery = recoveryDecision(message, 'navigate');
-        audit.append({ eventType: 'ACTION_FAILED', taskId, identityId, summary: `${message}; recovery=${recovery.category}` });
-        return result({ status: 'FAILED', error: message, recovery });
+        return error(e);
       }
     }
   );
@@ -157,8 +177,9 @@ export function createOperatorServer(): McpServer {
   server.registerTool(
     'browser_interact',
     {
-      description: 'Perform one bounded semantic browser interaction against a reference from the latest observation. Requires task-intent binding and rejects stale state.',
+      description: 'Perform one bounded semantic interaction under a stable actionId. Reusing an actionId never repeats the side effect blindly.',
       inputSchema: z.object({
+        actionId: z.string().regex(/^ACT-[A-Za-z0-9_-]+$/),
         taskId: z.string().min(1),
         identityId: z.string().min(1),
         intent: z.string().min(1),
@@ -170,7 +191,7 @@ export function createOperatorServer(): McpServer {
         approved: z.boolean().optional()
       })
     },
-    async ({ taskId, identityId, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
+    async ({ actionId, taskId, identityId, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
       try {
         tasks.get(taskId);
         const auth = policy.authorize({ taskId, intent, riskClass, approved });
@@ -178,14 +199,27 @@ export function createOperatorServer(): McpServer {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
           return result({ status: 'DENIED', authorization: auth });
         }
-        const action = await browsers.interact(identityId, stateVersion, ref, operation, value);
-        audit.append({ eventType: 'INTERACTION_EXECUTED', taskId, identityId, summary: `${operation} executed for task intent: ${intent.slice(0, 180)}` });
-        return result({ status: 'EXECUTED', authorization: auth, action, verificationRequired: true });
+
+        const begun = effects.begin({ actionId, taskId, identityId, intent, operation });
+        if (begun.duplicate) {
+          audit.append({ eventType: 'DUPLICATE_ACTION_SUPPRESSED', taskId, identityId, summary: `Duplicate ${actionId} not re-executed.` });
+          return result(duplicateEffectResponse(begun.record));
+        }
+
+        try {
+          const action = await browsers.interact(identityId, stateVersion, ref, operation, value);
+          const effect = effects.executed(actionId);
+          audit.append({ eventType: 'INTERACTION_EXECUTED', taskId, identityId, summary: `${operation} executed for ${actionId}.` });
+          return result({ status: 'EXECUTED_UNVERIFIED', authorization: auth, action, effect, verificationRequired: true });
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
+          const recovery = recoveryDecision(message, operation);
+          const effect = effects.failed(actionId, message, !safelyFailedCategory(recovery.category));
+          audit.append({ eventType: 'ACTION_FAILED', taskId, identityId, summary: `${actionId}: ${message}; recovery=${recovery.category}` });
+          return result({ status: effect.status, error: message, effect, recovery });
+        }
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        const recovery = recoveryDecision(message, operation);
-        audit.append({ eventType: 'ACTION_FAILED', taskId, identityId, summary: `${message}; recovery=${recovery.category}` });
-        return result({ status: 'FAILED', error: message, recovery });
+        return error(e);
       }
     }
   );
@@ -193,10 +227,11 @@ export function createOperatorServer(): McpServer {
   server.registerTool(
     'browser_verify',
     {
-      description: 'Verify observable postconditions after an action. Consequential effects must not be treated as successful without suitable evidence.',
+      description: 'Verify observable postconditions. Supply actionId when reconciling a prior mutation so its durable effect record becomes VERIFIED_PASS or VERIFIED_FAIL.',
       inputSchema: z.object({
         taskId: z.string().min(1),
         identityId: z.string().min(1),
+        actionId: z.string().regex(/^ACT-[A-Za-z0-9_-]+$/).optional(),
         expected: z.object({
           urlIncludes: z.string().optional(),
           titleIncludes: z.string().optional(),
@@ -204,20 +239,51 @@ export function createOperatorServer(): McpServer {
         })
       })
     },
-    async ({ taskId, identityId, expected }) => {
+    async ({ taskId, identityId, actionId, expected }) => {
       try {
         tasks.get(taskId);
         const verification = await verify(browsers, taskId, identityId, expected);
         verifications.save(verification);
         tasks.addEvidence(taskId, verification.verificationId);
+
+        let effect = null;
+        if (actionId) {
+          const existing = effects.get(actionId);
+          if (!existing) throw new Error('EFFECT_NOT_FOUND');
+          if (existing.taskId !== taskId || existing.identityId !== identityId) throw new Error('EFFECT_SCOPE_MISMATCH');
+          effect = effects.verified(actionId, verification.verificationId, verification.status === 'PASS');
+        }
+
         audit.append({
           eventType: 'VERIFIED',
           taskId,
           identityId,
-          summary: `Verification result: ${verification.status}.`,
+          summary: `Verification result: ${verification.status}${actionId ? ` for ${actionId}` : ''}.`,
           evidenceRefs: [verification.verificationId]
         });
-        return result(verification);
+        return result({ verification, effect });
+      } catch (e) {
+        return error(e);
+      }
+    }
+  );
+
+  server.registerTool(
+    'browser_effect_state',
+    {
+      description: 'Read durable effect/idempotency state for a browser mutation before deciding whether a retry is safe.',
+      inputSchema: z.object({
+        taskId: z.string().min(1),
+        actionId: z.string().regex(/^ACT-[A-Za-z0-9_-]+$/)
+      })
+    },
+    async ({ taskId, actionId }) => {
+      try {
+        tasks.get(taskId);
+        const effect = effects.get(actionId);
+        if (!effect) return result({ status: 'NOT_FOUND', actionId });
+        if (effect.taskId !== taskId) throw new Error('EFFECT_TASK_MISMATCH');
+        return result(effect);
       } catch (e) {
         return error(e);
       }
@@ -227,7 +293,7 @@ export function createOperatorServer(): McpServer {
   server.registerTool(
     'browser_recover',
     {
-      description: 'Classify a browser failure and return the safe recovery policy. This tool performs no browser side effect.',
+      description: 'Classify a browser failure and return the safe recovery policy. Performs no browser side effect.',
       inputSchema: z.object({
         taskId: z.string().min(1),
         errorMessage: z.string().min(1),
@@ -271,7 +337,7 @@ export function createOperatorServer(): McpServer {
   server.registerTool(
     'browser_resume',
     {
-      description: 'Resume automation after the user finishes a protected takeover. A fresh observation is mandatory before another ref-bound action.',
+      description: 'Resume automation after the user finishes protected takeover. A fresh observation is mandatory before another ref-bound action.',
       inputSchema: z.object({
         taskId: z.string().min(1),
         identityId: z.string().min(1)
