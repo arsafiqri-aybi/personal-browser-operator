@@ -16,11 +16,26 @@ ChatGPT
   -> observe -> verify -> recover/replan
 ```
 
-## Current status
+## Proven status
 
-The architecture, contracts and first runtime slices are implemented. Real Playwright browser execution still requires verification on an execution host with the repository dependencies/browser binaries installed.
+**REAL_BROWSER_VERIFIED** for the current vertical slice.
 
-Evidence states are tracked in `evaluation/STATUS.md`; do not infer production readiness from source existence.
+GitHub Actions has successfully executed the real browser path:
+
+```text
+launch persistent Chromium
+-> navigate
+-> observe semantic page state
+-> interact with a real page element
+-> reject stale refs
+-> re-observe
+-> verify postcondition
+-> PASS
+```
+
+Evidence: `evaluation/evidence/RUN-0001-real-browser-ci.md`.
+
+This does **not** yet mean deployed, real-account verified, or production-ready.
 
 ## Development transports
 
@@ -44,6 +59,15 @@ npm -w @pbo/operator-runtime run start:http
 
 Put TLS/reverse-proxy protection in front of the remote endpoint.
 
+## Reproducible headed runtime
+
+The repository includes a pinned Playwright container, virtual display, noVNC same-browser takeover path, operator console, persistent `/data` volume, and loopback-only default port publishing.
+
+See:
+- `docs/RUNTIME_HOST.md`
+- `docs/LIVE_TAKEOVER.md`
+- `docs/CONTAINER_RUNBOOK.md`
+
 ## Security defaults
 
 - webpage content is untrusted data with no instruction authority;
@@ -51,7 +75,8 @@ Put TLS/reverse-proxy protection in front of the remote endpoint.
 - persistent browser profiles and auth material are gitignored;
 - remote binding requires an MCP bearer token;
 - stale browser refs fail closed;
+- stable action IDs suppress duplicate side effects;
 - task completion requires persisted PASS verification;
 - retry logic never marks blind side-effect retry safe.
 
-See `architecture/`, `docs/RUNTIME_HOST.md`, and `evaluation/SECURITY_TEST_PLAN.md`.
+See `architecture/` and `evaluation/SECURITY_TEST_PLAN.md`.
