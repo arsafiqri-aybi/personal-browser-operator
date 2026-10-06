@@ -63,6 +63,16 @@ requires(railwayDoc, 'railway config init', 'Railway runbook');
 requires(railwayDoc, 'railway.json', 'Railway deprecation warning');
 requires(railwayDoc, 'offline_access', 'ChatGPT OAuth contract');
 
+for (const artifact of [
+  'scripts/verify-oauth-provider.mjs',
+  'scripts/preflight-release.mjs',
+  'docs/OAUTH_PROVIDER_GATE.md',
+  'docs/RELEASE_GATES.md',
+  'deploy/oauth.auth0.env.example',
+  'deploy/oauth.workos.env.example'
+]) {
+  assert.ok(fs.existsSync(artifact), 'missing OAuth/release artifact: ' + artifact);
+}
 console.log(JSON.stringify({
   ok: true,
   provider: 'railway-ready-provider-neutral-runtime',
