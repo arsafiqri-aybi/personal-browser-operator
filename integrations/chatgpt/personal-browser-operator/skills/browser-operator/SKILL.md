@@ -61,6 +61,8 @@ The durable task state is the operator's big-picture memory. Completed and block
 
 ## Actions and idempotency
 
+Every mutating browser action must carry the exact active subgoal returned by `browser_plan_next`. If there is no active subgoal, plan one first. If the task state and supplied subgoal differ, re-read `browser_task_state` and re-plan rather than bypassing the binding.
+
 For `browser_navigate` and `browser_interact`:
 
 - Bind every action to the current task and explicit intent.

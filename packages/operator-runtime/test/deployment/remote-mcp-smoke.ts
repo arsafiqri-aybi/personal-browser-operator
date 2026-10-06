@@ -52,6 +52,16 @@ try {
     }));
     assert.match(task.taskId, /^TASK-/);
 
+    const plannedSubgoal = 'Open and verify the public controlled smoke target';
+    textPayload(await client.callTool({
+      name: 'browser_plan_next',
+      arguments: {
+        taskId: task.taskId,
+        subgoal: plannedSubgoal,
+        decisionSummary: 'Navigate to the controlled public page, observe it, and verify its expected state.'
+      }
+    }));
+
     textPayload(await client.callTool({
       name: 'browser_session_open',
       arguments: {
@@ -67,6 +77,7 @@ try {
         actionId,
         taskId: task.taskId,
         identityId: 'ci-container',
+        subgoal: plannedSubgoal,
         intent: 'Open the public controlled smoke target',
         url: 'https://example.com/',
         riskClass: 'R1'

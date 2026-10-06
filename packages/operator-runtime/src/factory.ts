@@ -35,6 +35,14 @@ function safelyFailedCategory(category: string): boolean {
   return ['TARGET_NOT_FOUND', 'STALE_STATE', 'AMBIGUOUS_STATE', 'POLICY_DENIED'].includes(category);
 }
 
+function requireSubgoalBinding(taskId: string, suppliedSubgoal: string): string {
+  const task = tasks.get(taskId);
+  const active = task.currentSubgoal?.trim();
+  if (!active) throw new Error('ACTIVE_SUBGOAL_REQUIRED');
+  if (active !== suppliedSubgoal.trim()) throw new Error('SUBGOAL_BINDING_MISMATCH');
+  return active;
+}
+
 export function createOperatorServer(): McpServer {
   const server = new McpServer({
     name: 'personal-browser-operator',
@@ -197,15 +205,16 @@ export function createOperatorServer(): McpServer {
         actionId: z.string().regex(/^ACT-[A-Za-z0-9_-]+$/),
         taskId: z.string().min(1),
         identityId: z.string().min(1),
+        subgoal: z.string().min(1).max(1000),
         intent: z.string().min(1),
         url: z.string().url(),
         riskClass: z.enum(['R0','R1','R2','R3','R4','R5']).default('R1'),
         approved: z.boolean().optional()
       })
     },
-    async ({ actionId, taskId, identityId, intent, url, riskClass, approved }) => {
+    async ({ actionId, taskId, identityId, subgoal, intent, url, riskClass, approved }) => {
       try {
-        tasks.get(taskId);
+        const activeSubgoal = requireSubgoalBinding(taskId, subgoal);
         const auth = policy.authorize({ taskId, intent, riskClass, approved });
         if (!auth.allowed) {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
@@ -222,7 +231,7 @@ export function createOperatorServer(): McpServer {
           const navigation = await browsers.navigate(identityId, url);
           const effect = effects.executed(actionId);
           audit.append({ eventType: 'NAVIGATED', taskId, identityId, summary: `Navigation executed for ${actionId}.` });
-          return result({ status: 'EXECUTED_UNVERIFIED', authorization: auth, navigation, effect, verificationRequired: true, requiresFreshObservation: true });
+          return result({ status: 'EXECUTED_UNVERIFIED', authorization: auth, activeSubgoal, navigation, effect, verificationRequired: true, requiresFreshObservation: true });
         } catch (e) {
           const message = e instanceof Error ? e.message : String(e);
           const recovery = recoveryDecision(message, 'navigate');
@@ -244,6 +253,7 @@ export function createOperatorServer(): McpServer {
         actionId: z.string().regex(/^ACT-[A-Za-z0-9_-]+$/),
         taskId: z.string().min(1),
         identityId: z.string().min(1),
+        subgoal: z.string().min(1).max(1000),
         intent: z.string().min(1),
         stateVersion: z.string().min(1),
         ref: z.string().min(1),
@@ -253,9 +263,9 @@ export function createOperatorServer(): McpServer {
         approved: z.boolean().optional()
       })
     },
-    async ({ actionId, taskId, identityId, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
+    async ({ actionId, taskId, identityId, subgoal, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
       try {
-        tasks.get(taskId);
+        const activeSubgoal = requireSubgoalBinding(taskId, subgoal);
         const auth = policy.authorize({ taskId, intent, riskClass, approved });
         if (!auth.allowed) {
           audit.append({ eventType: 'ACTION_DENIED', taskId, identityId, summary: auth.reason });
@@ -272,7 +282,7 @@ export function createOperatorServer(): McpServer {
           const action = await browsers.interact(identityId, stateVersion, ref, operation, value);
           const effect = effects.executed(actionId);
           audit.append({ eventType: 'INTERACTION_EXECUTED', taskId, identityId, summary: `${operation} executed for ${actionId}.` });
-          return result({ status: 'EXECUTED_UNVERIFIED', authorization: auth, action, effect, verificationRequired: true });
+          return result({ status: 'EXECUTED_UNVERIFIED', authorization: auth, activeSubgoal, action, effect, verificationRequired: true });
         } catch (e) {
           const message = e instanceof Error ? e.message : String(e);
           const recovery = recoveryDecision(message, operation);
