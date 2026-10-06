@@ -1,6 +1,6 @@
 {
   "name": "@pbo/operator-runtime",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -19,6 +19,7 @@
   "dependencies": {
     "@modelcontextprotocol/node": "2.1.1",
     "@modelcontextprotocol/server": "2.3.0",
+    "jose": "6.2.12",
     "playwright": "1.63.0",
     "zod": "4.6.5"
   },

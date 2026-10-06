@@ -1,0 +1,24 @@
+{
+  "entry_id": "ARCH-0005",
+  "architecture_version": "0.4.0",
+  "previous_entry_hash": "f78739f7796b207afcafee3c2bacf91869b728f6e846e869dd7942d34a2bae46",
+  "reason": "Add standards-based OAuth resource-server discovery and JWT verification for production MCP connections while retaining static bearer as an explicit bootstrap and CI mode.",
+  "affected_modules": ["PBO-07", "PBO-13", "PBO-19", "PBO-20"],
+  "affected_contracts": ["mcp_authentication", "public_ingress_runtime", "chatgpt_connection"],
+  "protected_invariants_changed": false,
+  "required_tests": ["oauth-resource-metadata", "oauth-jwt-verification", "oauth-scope-denial", "static-bearer-regression", "container-remote-mcp"],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "architecture/architecture.yaml": "3e2c79dfc8c5227ab6537c2562b9ccf7da5be412e72dc1c8b1825794761e4e73",
+    "architecture/adr/ADR-0007-oauth-resource-server.md": "4fb664dbd6243c63e4aeb8361e502dd10da01554a59716631076e003c4e0c66c",
+    "packages/operator-runtime/src/auth.ts": "f03bc4d8cd8e9da9525f15509a171c8e0ae6e9942df46d8e0ad24a804b8a2d3e",
+    "packages/operator-runtime/src/http.ts": "43a1050add40a630d2c0fa3423f77b0f57b2c1f7f671de2a86419f265f1ed3db",
+    "container/nginx.conf.template": "9d0253f8572947dc48ffb659cb5be62089d64e1696559e67ff37d0b8b56455c7",
+    "container/start-runtime.sh": "b6f091d253feb4ebab5f4f1784d4d322d1373c461025b9e7a7a4498262740c20"
+  },
+  "evidence": {
+    "authorization_profile": "MCP 2026-07-28 OAuth resource server with RFC 9728 protected resource metadata",
+    "authorization_server": "external"
+  },
+  "entry_hash": "cfa6276bf5a4de7b0a6dc3ce01fea110447ce1dc1e20acf6a15ddc750979b09a"
+}

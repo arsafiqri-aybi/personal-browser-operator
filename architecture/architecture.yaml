@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-architecture_version: "0.3.1"
+architecture_version: "0.4.0"
 status: LOCKED
 control_loop:
   - STATE
@@ -36,8 +36,13 @@ runtime_host:
   persistent_mount: /data
   privilege_model: root_bootstrap_nonroot_workload
   provider_dependency: none
+  mcp_authentication:
+    bootstrap: static_bearer
+    production: oauth_resource_server
+    authorization_server: external
 public_routes:
   /mcp: mcp_gateway
+  /.well-known/oauth-protected-resource/mcp: oauth_resource_metadata
   /console: operator_console
   /api: operator_console_api
   /novnc: same_browser_takeover

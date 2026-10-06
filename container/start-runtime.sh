@@ -7,6 +7,7 @@ set -euo pipefail
 : "${PBO_CONSOLE_HOST:=127.0.0.1}"
 : "${PBO_CONSOLE_PORT:=8790}"
 : "${PBO_HEADLESS:=false}"
+: "${PBO_AUTH_MODE:=static-bearer}"
 PBO_PUBLIC_PORT="${PORT:-${PBO_PUBLIC_PORT:-8080}}"
 : "${DISPLAY:=:99}"
 
@@ -15,10 +16,31 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
-if [[ -z "${PBO_MCP_TOKEN:-}" ]]; then
-  echo "PBO_MCP_TOKEN is required in container runtime" >&2
-  exit 1
-fi
+case "$PBO_AUTH_MODE" in
+  static-bearer)
+    if [[ -z "${PBO_MCP_TOKEN:-}" ]]; then
+      echo "PBO_MCP_TOKEN is required in static-bearer mode" >&2
+      exit 1
+    fi
+    ;;
+  oauth-jwt)
+    for name in PBO_PUBLIC_BASE_URL PBO_OAUTH_ISSUER PBO_OAUTH_JWKS_URI; do
+      if [[ -z "${!name:-}" ]]; then
+        echo "$name is required in oauth-jwt mode" >&2
+        exit 1
+      fi
+    done
+    ;;
+  loopback-none)
+    echo "loopback-none is not permitted in the public container runtime" >&2
+    exit 1
+    ;;
+  *)
+    echo "Unsupported PBO_AUTH_MODE: $PBO_AUTH_MODE" >&2
+    exit 1
+    ;;
+esac
+
 if [[ -z "${PBO_CONSOLE_TOKEN:-}" ]]; then
   echo "PBO_CONSOLE_TOKEN is required in container runtime" >&2
   exit 1
@@ -46,7 +68,7 @@ chown pwuser:pwuser \
   /tmp/nginx-scgi
 chmod 700 "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
 
-export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS PBO_PUBLIC_PORT
+export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS PBO_PUBLIC_PORT PBO_AUTH_MODE
 export PBO_NOVNC_PUBLIC_URL="${PBO_NOVNC_PUBLIC_URL:-/novnc/vnc.html?autoconnect=true&resize=scale}"
 export HOME=/home/pwuser
 
