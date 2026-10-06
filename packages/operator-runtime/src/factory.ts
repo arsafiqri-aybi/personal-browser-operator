@@ -50,6 +50,18 @@ function assertTaskDomainAllowed(allowedDomains: string[], rawUrl: string): void
   if (!allowed) throw new Error('DOMAIN_NOT_ALLOWED_BY_TASK');
 }
 
+function requireTaskIdentity(taskId: string, identityId: string) {
+  const task = tasks.get(taskId);
+  if (!task.browserIdentity) throw new Error('TASK_IDENTITY_NOT_BOUND');
+  if (task.browserIdentity !== identityId) throw new Error('TASK_IDENTITY_MISMATCH');
+  return task;
+}
+
+function assertTaskIdentity(task: { browserIdentity: string | null }, identityId: string): void {
+  if (!task.browserIdentity) throw new Error('TASK_IDENTITY_NOT_BOUND');
+  if (task.browserIdentity !== identityId) throw new Error('TASK_IDENTITY_MISMATCH');
+}
+
 export function createOperatorServer(): McpServer {
   const server = new McpServer({
     name: 'personal-browser-operator',
@@ -169,7 +181,10 @@ export function createOperatorServer(): McpServer {
     },
     async ({ taskId, identityId }) => {
       try {
-        tasks.get(taskId);
+        const existingTask = tasks.get(taskId);
+        if (existingTask.browserIdentity !== null && existingTask.browserIdentity !== identityId) {
+          throw new Error('TASK_IDENTITY_REBIND_DENIED');
+        }
         const opened = await browsers.open(identityId);
         const task = tasks.bindIdentity(taskId, identityId);
         audit.append({ eventType: 'SESSION_OPENED', taskId, identityId, summary: 'Persistent browser identity opened.' });
@@ -191,7 +206,7 @@ export function createOperatorServer(): McpServer {
     },
     async ({ taskId, identityId }) => {
       try {
-        tasks.get(taskId);
+        requireTaskIdentity(taskId, identityId);
         const observation = await browsers.observe(identityId);
         tasks.addEvidence(taskId, observation.observationId);
         audit.append({
@@ -226,6 +241,7 @@ export function createOperatorServer(): McpServer {
     async ({ actionId, taskId, identityId, subgoal, intent, url, riskClass, approved }) => {
       try {
         const task = requireSubgoalBinding(taskId, subgoal);
+        assertTaskIdentity(task, identityId);
         const activeSubgoal = task.currentSubgoal as string;
         assertTaskDomainAllowed(task.allowedDomains, url);
         const auth = policy.authorize({ taskId, intent, riskClass, taskRiskMax: task.riskProfile, approved });
@@ -279,6 +295,7 @@ export function createOperatorServer(): McpServer {
     async ({ actionId, taskId, identityId, subgoal, intent, stateVersion, ref, operation, value, riskClass, approved }) => {
       try {
         const task = requireSubgoalBinding(taskId, subgoal);
+        assertTaskIdentity(task, identityId);
         const activeSubgoal = task.currentSubgoal as string;
         const auth = policy.authorize({ taskId, intent, riskClass, taskRiskMax: task.riskProfile, approved });
         if (!auth.allowed) {
@@ -327,7 +344,7 @@ export function createOperatorServer(): McpServer {
     },
     async ({ taskId, identityId, actionId, expected }) => {
       try {
-        tasks.get(taskId);
+        requireTaskIdentity(taskId, identityId);
         const verification = await verify(browsers, taskId, identityId, expected);
         verifications.save(verification);
         tasks.addEvidence(taskId, verification.verificationId);
@@ -410,6 +427,7 @@ export function createOperatorServer(): McpServer {
     },
     async ({ taskId, identityId, reason }) => {
       try {
+        requireTaskIdentity(taskId, identityId);
         browsers.session(identityId);
         const state = takeover.request(taskId, reason);
         audit.append({ eventType: 'HUMAN_TAKEOVER_REQUESTED', taskId, identityId, summary: reason.slice(0, 300) });
@@ -431,6 +449,7 @@ export function createOperatorServer(): McpServer {
     },
     async ({ taskId, identityId }) => {
       try {
+        requireTaskIdentity(taskId, identityId);
         browsers.session(identityId);
         const state = takeover.resume(taskId);
         audit.append({ eventType: 'HUMAN_TAKEOVER_RESUMED', taskId, identityId, summary: 'User returned control to operator.' });
@@ -493,7 +512,7 @@ export function createOperatorServer(): McpServer {
     },
     async ({ taskId, identityId }) => {
       try {
-        tasks.get(taskId);
+        requireTaskIdentity(taskId, identityId);
         await browsers.close(identityId);
         audit.append({ eventType: 'SESSION_CLOSED', taskId, identityId, summary: 'Browser identity session closed.' });
         return result({ status: 'CLOSED', identityId });

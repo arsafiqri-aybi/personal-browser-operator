@@ -120,6 +120,9 @@ export class TaskStore {
 
   bindIdentity(taskId: string, identityId: string): TaskState {
     return this.mutate(taskId, task => {
+      if (task.browserIdentity !== null && task.browserIdentity !== identityId) {
+        throw new Error('TASK_IDENTITY_REBIND_DENIED');
+      }
       task.browserIdentity = identityId;
     });
   }

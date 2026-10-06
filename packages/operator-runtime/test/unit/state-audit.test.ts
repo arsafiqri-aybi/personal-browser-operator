@@ -118,3 +118,25 @@ test('task contract preserves constraints, domains, risk and acceptance criteria
 
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+
+test('task identity cannot be silently rebound', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pbo-identity-'));
+  process.env.PBO_DATA_DIR = root;
+
+  const store = new TaskStore();
+  const task = store.start('Use one isolated browser identity');
+  const bound = store.bindIdentity(task.taskId, 'identity-a');
+  assert.equal(bound.browserIdentity, 'identity-a');
+
+  const same = store.bindIdentity(task.taskId, 'identity-a');
+  assert.equal(same.browserIdentity, 'identity-a');
+
+  assert.throws(
+    () => store.bindIdentity(task.taskId, 'identity-b'),
+    /TASK_IDENTITY_REBIND_DENIED/
+  );
+
+  assert.equal(store.get(task.taskId).browserIdentity, 'identity-a');
+  fs.rmSync(root, { recursive: true, force: true });
+});
