@@ -216,7 +216,7 @@ export class BrowserManager {
     }
 
     if (descriptor.name) {
-      const candidate = session.page.getByText(descriptor.name, { exact: true }).first();
+      const candidate = session.page.getByText(descriptor.name, { exact: true });
       if (await candidate.count() === 1) return candidate;
     }
 
