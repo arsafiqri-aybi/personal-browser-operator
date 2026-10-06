@@ -15,6 +15,12 @@ evidence:
     commit: 618e6215770c5925e976e7b75cd8918f0bb76753
     conclusion: PASS
     evidence_file: evaluation/evidence/RUN-0002-container-runtime-ci.md
+  chatgpt_integration_source_ci:
+    workflow_run: 37417847128
+    job: 112120345288
+    commit: 52706256ee6ab4e3216f3d74323cc56e896f3329
+    conclusion: PASS
+    evidence_file: evaluation/evidence/RUN-0003-chatgpt-integration-source-ci.md
 work_packages:
   WP-00: {name: Research & Environment Lock, status: PASS, depends_on: []}
   WP-01: {name: Architecture Genesis, status: PASS, depends_on: [WP-00]}
@@ -36,7 +42,7 @@ work_packages:
   WP-17: {name: Runtime Persistence & Recovery, status: CONTAINER_RESTART_VERIFIED_SLICE, depends_on: [WP-05, WP-08, WP-10, WP-15]}
   WP-18: {name: Evaluation System, status: PASS_CONTAINER_RUNTIME_SLICE, depends_on: [WP-10, WP-11, WP-12, WP-13]}
   WP-19: {name: Deployment & Secure Remote Access, status: CONTAINER_ARTIFACT_VERIFIED_UNDEPLOYED, depends_on: [WP-13, WP-17, WP-18]}
-  WP-20: {name: ChatGPT Surface Integration, status: NOT_STARTED, depends_on: [WP-07, WP-17, WP-19]}
+  WP-20: {name: ChatGPT Surface Integration, status: SOURCE_VERIFIED_AWAITING_PUBLIC_MCP, depends_on: [WP-07, WP-17, WP-19]}
   WP-21: {name: Real Account Pilot, status: NOT_STARTED, depends_on: [WP-13, WP-18, WP-20]}
   WP-22: {name: Release Hardening, status: NOT_STARTED, depends_on: [WP-21]}
   WP-23: {name: Production Release, status: NOT_STARTED, depends_on: [WP-22]}

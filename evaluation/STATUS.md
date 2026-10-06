@@ -42,6 +42,14 @@ The run proved real browser execution plus Docker build, authenticated remote MC
 
 Evidence: `evaluation/evidence/RUN-0002-container-runtime-ci.md`.
 
+### RUN-0003 — ChatGPT integration source
+
+GitHub Actions run `37417847128`, job `112120345288`, commit `52706256ee6ab4e3216f3d74323cc56e896f3329` — **PASS**.
+
+The run proved the canonical private-plugin manifest/template/skill renderer is deterministically valid and preserved all real-browser/container regressions. This is source verification only; no plugin connection is claimed.
+
+Evidence: `evaluation/evidence/RUN-0003-chatgpt-integration-source-ci.md`.
+
 ## Deployment status
 
 The deployment artifact is now **container-runtime verified but externally undeployed**.
@@ -58,8 +66,9 @@ Cloudflare Containers were evaluated earlier but are unavailable on the current 
 6. verify public `/health`;
 7. execute the same remote MCP smoke through the public HTTPS origin;
 8. prove same-browser live noVNC takeover;
-9. connect the remote MCP to the ChatGPT surface;
-10. user-controlled authenticated login bootstrap;
-11. controlled real-account pilot.
+9. render the already-verified ChatGPT plugin source with the verified public `/mcp` URL;
+10. create/connect the private plugin and smoke-test tool discovery from ChatGPT;
+11. user-controlled authenticated login bootstrap;
+12. controlled real-account pilot.
 
 No `DEPLOYED`, `REAL_ACCOUNT_VERIFIED`, or `PRODUCTION_READY` claim is made.
