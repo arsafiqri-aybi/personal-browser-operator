@@ -7,6 +7,7 @@ RUN apt-get update \
      xvfb \
      fluxbox \
      x11vnc \
+     x11-utils \
      novnc \
      websockify \
      nginx \

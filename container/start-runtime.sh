@@ -78,6 +78,25 @@ chmod 600 "$PBO_DATA_DIR/vnc/passwd"
 gosu pwuser Xvfb "$DISPLAY" -screen 0 1440x960x24 -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
 XVFB_PID=$!
 
+X_READY=false
+for _ in $(seq 1 100); do
+  if ! kill -0 "$XVFB_PID" 2>/dev/null; then
+    cat /tmp/xvfb.log >&2 || true
+    echo "Xvfb exited before display became ready." >&2
+    exit 1
+  fi
+  if gosu pwuser xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    X_READY=true
+    break
+  fi
+  sleep 0.1
+done
+if [[ "$X_READY" != "true" ]]; then
+  cat /tmp/xvfb.log >&2 || true
+  echo "Timed out waiting for X display $DISPLAY." >&2
+  exit 1
+fi
+
 gosu pwuser fluxbox -display "$DISPLAY" >/tmp/fluxbox.log 2>&1 &
 FLUXBOX_PID=$!
 
