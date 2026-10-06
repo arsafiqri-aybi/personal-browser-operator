@@ -32,12 +32,18 @@ mkdir -p \
   "$PBO_DATA_DIR" \
   "$PBO_DATA_DIR/vnc" \
   /tmp/nginx-client-body \
-  /tmp/nginx-proxy
+  /tmp/nginx-proxy \
+  /tmp/nginx-fastcgi \
+  /tmp/nginx-uwsgi \
+  /tmp/nginx-scgi
 chown pwuser:pwuser \
   "$PBO_DATA_DIR" \
   "$PBO_DATA_DIR/vnc" \
   /tmp/nginx-client-body \
-  /tmp/nginx-proxy
+  /tmp/nginx-proxy \
+  /tmp/nginx-fastcgi \
+  /tmp/nginx-uwsgi \
+  /tmp/nginx-scgi
 chmod 700 "$PBO_DATA_DIR" "$PBO_DATA_DIR/vnc"
 
 export DISPLAY PBO_DATA_DIR PBO_HOST PBO_PORT PBO_CONSOLE_HOST PBO_CONSOLE_PORT PBO_HEADLESS PBO_PUBLIC_PORT

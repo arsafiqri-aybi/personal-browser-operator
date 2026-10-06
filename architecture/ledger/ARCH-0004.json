@@ -1,0 +1,21 @@
+{
+  "entry_id": "ARCH-0004",
+  "architecture_version": "0.3.1",
+  "previous_entry_hash": "489cb92998e22dc905c3110bfbda4bdd224ed2ee53becaa4c21f1ec4ef564c77",
+  "reason": "Correct non-root nginx runtime temp paths discovered by final-container CI without changing architecture semantics.",
+  "affected_modules": ["PBO-13","PBO-16","PBO-17","PBO-19"],
+  "affected_contracts": ["public_ingress_runtime"],
+  "protected_invariants_changed": false,
+  "required_tests": ["container-build","single-public-port","gateway-health","remote-mcp","nonroot-processes","persistent-restart"],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "container/nginx.conf.template": "76f11b9efdfcba2346f0d256d433d4bb08d28c6051ea42c0a31e0e059911a19e",
+    "container/start-runtime.sh": "702909a6374d061ffcc675031ee012d5180036c8ef6876316ee26e4e10ddd41a"
+  },
+  "evidence": {
+    "failed_ci_run": 37411786770,
+    "failed_job": 112101602446,
+    "failure": "nginx non-root startup attempted /var/lib/nginx/fastcgi and received permission denied"
+  },
+  "entry_hash": "f78739f7796b207afcafee3c2bacf91869b728f6e846e869dd7942d34a2bae46"
+}
