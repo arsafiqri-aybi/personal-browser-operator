@@ -120,23 +120,41 @@ export class BrowserManager {
     session.refs.clear();
   }
 
+  private async restoreAfterBlockedNavigation(session: Session, safeUrl: string): Promise<void> {
+    session.navigationPolicyViolation = null;
+    if (!/^https?:\/\//i.test(safeUrl)) return;
+    if (session.page.url() === safeUrl) return;
+
+    try {
+      await session.page.goto(safeUrl, { waitUntil: 'domcontentloaded' });
+    } catch {
+      // Best-effort continuity recovery. The original policy violation remains authoritative.
+    }
+  }
+
   async navigate(identityId: string, rawUrl: string): Promise<{ url: string; title: string }> {
     const session = this.session(identityId);
     const url = process.env.PBO_ALLOW_PRIVATE_NETWORKS === 'true'
       ? new URL(rawUrl)
       : await assertPublicHttpUrl(rawUrl);
 
+    const safeUrl = session.page.url();
     session.navigationPolicyViolation = null;
     try {
       await session.page.goto(url.toString(), { waitUntil: 'domcontentloaded' });
     } catch (error) {
       const policyViolation = session.navigationPolicyViolation;
+      if (policyViolation) {
+        await this.restoreAfterBlockedNavigation(session, safeUrl);
+        this.invalidateObservedState(session);
+        throw new Error(policyViolation);
+      }
       this.invalidateObservedState(session);
-      if (policyViolation) throw new Error(policyViolation);
       throw error;
     }
 
     const policyViolation = session.navigationPolicyViolation;
+    if (policyViolation) await this.restoreAfterBlockedNavigation(session, safeUrl);
     this.invalidateObservedState(session);
     if (policyViolation) throw new Error(policyViolation);
     return { url: session.page.url(), title: await session.page.title() };
@@ -280,6 +298,7 @@ export class BrowserManager {
   ): Promise<{ operation: string; targetRef: string; needsReobserve: true }> {
     const session = this.session(identityId);
     const locator = await this.resolve(identityId, stateVersion, ref);
+    const safeUrl = session.page.url();
     session.navigationPolicyViolation = null;
 
     switch (operation) {
@@ -304,6 +323,7 @@ export class BrowserManager {
     }
 
     const policyViolation = session.navigationPolicyViolation;
+    if (policyViolation) await this.restoreAfterBlockedNavigation(session, safeUrl);
     this.invalidateObservedState(session);
     if (policyViolation) throw new Error(policyViolation);
     return { operation, targetRef: ref, needsReobserve: true };
