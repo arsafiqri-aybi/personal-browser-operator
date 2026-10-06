@@ -74,9 +74,19 @@ fi
 TASK_ID="$(printf '%s\n' "$REMOTE_OUTPUT" | sed -n 's/^PBO_TASK_ID=//p' | tail -n 1)"
 test -n "$TASK_ID"
 
-docker top "$NAME" -eo user,pid,comm,args > /tmp/pbo-container-top.txt
-grep -E '^pwuser[[:space:]].*[[:space:]]node[[:space:]]' /tmp/pbo-container-top.txt >/dev/null
-grep -E '^pwuser[[:space:]].*(chrome|chromium)' /tmp/pbo-container-top.txt >/dev/null
+PWUSER_UID="$(docker exec "$NAME" id -u pwuser)"
+docker top "$NAME" -eo uid,pid,comm,args > /tmp/pbo-container-top.txt
+cat /tmp/pbo-container-top.txt
+
+awk -v uid="$PWUSER_UID" '
+  NR > 1 && $1 == uid && $3 == "node" { found=1 }
+  END { exit found ? 0 : 1 }
+' /tmp/pbo-container-top.txt
+
+awk -v uid="$PWUSER_UID" '
+  NR > 1 && $1 == uid && ($3 ~ /chrome|chromium/ || $0 ~ /(chrome|chromium)/) { found=1 }
+  END { exit found ? 0 : 1 }
+' /tmp/pbo-container-top.txt
 
 docker exec "$NAME" test -d /data/profiles/ci-container
 docker rm -f "$NAME" >/dev/null
