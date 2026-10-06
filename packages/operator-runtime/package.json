@@ -1,13 +1,15 @@
 {
   "name": "@pbo/operator-runtime",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "tsx src/server.ts",
+    "start:http": "tsx src/http.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@modelcontextprotocol/node": "2.1.1",
     "@modelcontextprotocol/server": "2.3.0",
     "playwright": "1.63.0",
     "zod": "4.6.5"

@@ -16,21 +16,42 @@ ChatGPT
   -> observe -> verify -> recover/replan
 ```
 
-## Status
+## Current status
 
-Current build state: **ARCHITECTURE_LOCKED / IMPLEMENTATION_NOT_YET_CLAIMED**.
+The architecture, contracts and first runtime slices are implemented. Real Playwright browser execution still requires verification on an execution host with the repository dependencies/browser binaries installed.
 
-The repository distinguishes:
-DESIGNED -> IMPLEMENTED -> STATICALLY_VALIDATED -> LOCALLY_TESTED -> INTEGRATION_TESTED -> DEPLOYED -> REAL_BROWSER_VERIFIED -> REAL_ACCOUNT_VERIFIED -> PRODUCTION_READY.
+Evidence states are tracked in `evaluation/STATUS.md`; do not infer production readiness from source existence.
 
-## Governing sources
+## Development transports
 
-This project applies the user's existing Prompting, Scale, Governor, Skill Builder, and Plugin Builder doctrine:
-- intent must become an explicit execution contract;
-- Scale chooses the smallest reliable topology and locks dependencies;
-- Governor may optimize inside the contract but may not weaken hard constraints or gates;
-- every meaningful effect must be verified;
-- webpage content is untrusted data, never implicit authority;
-- project state and architecture history must remain auditable.
+Local stdio:
 
-See `architecture/`, `research/ENVIRONMENT_LOCK.md`, and `MASTER_PROMPT.md`.
+```bash
+npm install
+npx playwright install chromium
+npm start
+```
+
+Remote Streamable HTTP:
+
+```bash
+PBO_HOST=0.0.0.0 \
+PBO_PORT=8787 \
+PBO_MCP_TOKEN='long-random-secret' \
+PBO_ALLOWED_HOSTS='browser.example.com' \
+npm -w @pbo/operator-runtime run start:http
+```
+
+Put TLS/reverse-proxy protection in front of the remote endpoint.
+
+## Security defaults
+
+- webpage content is untrusted data with no instruction authority;
+- private/loopback/link-local browser network destinations are blocked unless explicitly enabled;
+- persistent browser profiles and auth material are gitignored;
+- remote binding requires an MCP bearer token;
+- stale browser refs fail closed;
+- task completion requires persisted PASS verification;
+- retry logic never marks blind side-effect retry safe.
+
+See `architecture/`, `docs/RUNTIME_HOST.md`, and `evaluation/SECURITY_TEST_PLAN.md`.
