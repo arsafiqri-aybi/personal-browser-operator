@@ -16,24 +16,20 @@
 - WP-11 Verification Engine — DURABLE VERIFICATION EVIDENCE
 - WP-12 Recovery & Replanning Engine — SAFE-RETRY + duplicate-effect suppression
 - WP-13 Instruction Firewall & Security — trust/network/remote-auth boundaries implemented; adversarial proof pending
-- WP-14 Human Takeover — STATE MACHINE + same-browser noVNC runtime path DESIGNED/IMPLEMENTED
+- WP-14 Human Takeover — STATE MACHINE + same-browser noVNC runtime path IMPLEMENTED
 - WP-15 Audit & Provenance — HASH-CHAINED RUNTIME AUDIT
-- WP-16 Live Browser Console — INITIAL IMPLEMENTATION: task state + audit dashboard + noVNC viewport
+- WP-16 Live Browser Console — INITIAL IMPLEMENTATION
 - WP-17 Runtime Persistence & Recovery — PARTIAL
 - WP-18 Evaluation System — unit/contract/browser test harness defined
 - WP-19 Deployment & Secure Remote Access — REPRODUCIBLE CONTAINER HOST IMPLEMENTED; live deployment not yet verified
 - WP-20+ — NOT COMPLETE
 
-## New evidence/implementation
+## Architecture governance
 
-- VFY-019 Docker runtime is pinned to Playwright image `v1.63.0-noble`.
-- VFY-020 Chromium runs headed on the same virtual display exposed to the human through noVNC.
-- VFY-021 VNC server is loopback-only inside the container; websockify is the browser-view bridge.
-- VFY-022 Docker Compose publishes MCP, console and noVNC on host loopback only by default.
-- VFY-023 container startup fails unless MCP token, console token and VNC password are supplied.
-- VFY-024 production runtime uses compiled JavaScript rather than tsx for MCP/console processes.
-- VFY-025 live console reads durable task and audit state without duplicating browser/session state.
-
-These are source-level implementation claims. Container build/run and real browser evidence are still NOT_RUN from this chat environment.
+- Current architecture version: **0.2.0**
+- Ledger head: **ARCH-0001**
+- Ledger head SHA-256: `fa6d8a56198b564050da0c37978010ea30b2882306f89f90b9c3ebb53a21460b`
+- ARCH-0001 locks durable effect idempotency and same-browser human takeover.
+- Architecture validator now verifies the entire previous-hash chain, current ledger head, current architecture version, and raw artifact hashes for ledger entries that opt into raw artifact hashing.
 
 No REAL_BROWSER_VERIFIED or PRODUCTION_READY claim is made.

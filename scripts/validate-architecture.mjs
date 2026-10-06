@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import path from 'node:path';
 import YAML from 'yaml';
 
 const read = p => fs.readFileSync(p, 'utf8');
@@ -30,14 +31,56 @@ if (genesisHash !== lock.genesis_sha256) {
   throw new Error(`GENESIS hash mismatch: ${genesisHash} != ${lock.genesis_sha256}`);
 }
 
-const ledgerPath = `architecture/ledger/${lock.ledger_head}.json`;
-const ledger = JSON.parse(read(ledgerPath));
-const expectedEntryHash = ledger.entry_hash;
-const withoutHash = { ...ledger };
-delete withoutHash.entry_hash;
-const actualEntryHash = sha(canonical(withoutHash));
-if (actualEntryHash !== expectedEntryHash || actualEntryHash !== lock.ledger_head_sha256) {
-  throw new Error('Architecture ledger head hash mismatch');
+const ledgerDir = 'architecture/ledger';
+const ledgerFiles = fs.readdirSync(ledgerDir)
+  .filter(name => /^ARCH-\d+\.json$/.test(name))
+  .sort();
+
+if (ledgerFiles.length === 0) throw new Error('Architecture ledger is empty');
+
+let previousHash = null;
+let lastEntry = null;
+
+for (const name of ledgerFiles) {
+  const entry = JSON.parse(read(path.join(ledgerDir, name)));
+  const expectedEntryHash = entry.entry_hash;
+  const withoutHash = { ...entry };
+  delete withoutHash.entry_hash;
+  const actualEntryHash = sha(canonical(withoutHash));
+
+  if (actualEntryHash !== expectedEntryHash) {
+    throw new Error(`${name} entry hash mismatch`);
+  }
+
+  if (entry.previous_entry_hash !== previousHash) {
+    throw new Error(`${name} previous_entry_hash does not match chain head`);
+  }
+
+  if (entry.artifact_hash_mode === 'raw_utf8') {
+    for (const [artifactPath, expectedHash] of Object.entries(entry.artifact_hashes || {})) {
+      if (!fs.existsSync(artifactPath)) throw new Error(`${name} missing artifact ${artifactPath}`);
+      const actualHash = sha(read(artifactPath));
+      if (actualHash !== expectedHash) {
+        throw new Error(`${name} artifact hash mismatch for ${artifactPath}`);
+      }
+    }
+  }
+
+  previousHash = actualEntryHash;
+  lastEntry = entry;
+}
+
+if (!lastEntry) throw new Error('Architecture ledger head missing');
+if (lastEntry.entry_id !== lock.ledger_head || previousHash !== lock.ledger_head_sha256) {
+  throw new Error('ARCHITECTURE.lock does not match actual ledger head');
+}
+if (lastEntry.architecture_version !== lock.architecture_version) {
+  throw new Error('Architecture version mismatch between ledger head and lock');
+}
+
+const architecture = YAML.parse(read('architecture/architecture.yaml'));
+if (architecture.architecture_version !== lock.architecture_version) {
+  throw new Error('architecture.yaml version does not match lock');
 }
 
 const inv = YAML.parse(read('architecture/invariants.yaml'));
@@ -64,10 +107,12 @@ for (const node of Object.keys(graph)) visit(node);
 
 console.log(JSON.stringify({
   ok: true,
-  architectureVersion: genesis.architecture_version,
+  architectureVersion: lock.architecture_version,
+  genesisVersion: genesis.architecture_version,
   genesisHash,
+  ledgerEntries: ledgerFiles.length,
   ledgerHead: lock.ledger_head,
-  ledgerHeadHash: actualEntryHash,
+  ledgerHeadHash: previousHash,
   invariants: ids.length,
   modules: Object.keys(graph).length
 }, null, 2));

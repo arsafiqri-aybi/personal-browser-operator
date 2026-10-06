@@ -1,0 +1,22 @@
+{
+  "entry_id": "ARCH-0001",
+  "architecture_version": "0.2.0",
+  "previous_entry_hash": "faf0b5f7cae504251c04e1fdb581f5d8b98feb8c5816903360ff18d345278aaf",
+  "reason": "Lock durable browser-effect idempotency plus persistent headed runtime and same-browser human takeover as architectural requirements.",
+  "affected_modules": ["PBO-04","PBO-05","PBO-09","PBO-10","PBO-11","PBO-12","PBO-14","PBO-16","PBO-17","PBO-18","PBO-19"],
+  "affected_contracts": ["action","effect","verification","task","audit"],
+  "protected_invariants_changed": false,
+  "required_tests": ["effect-idempotency","unknown-effect-reconciliation","same-browser-takeover","remote-auth","runtime-port-boundary","restart-persistence"],
+  "artifact_hash_mode": "raw_utf8",
+  "artifact_hashes": {
+    "architecture/architecture.yaml": "6e23bade4c496118d94e0c50f18e27405842a646b58f48c6b89d65bc051148ae",
+    "architecture/interfaces.yaml": "45bb03fc63b1679dc0c8de6d4842bdf994bf281cf465d36582d58e549bdac3ba",
+    "architecture/adr/ADR-0002-durable-effect-idempotency.md": "2e5fa6633986d90dcb8b26351fa69f5aeca84365dc6f2549ec889c418e604cd9",
+    "architecture/adr/ADR-0003-persistent-headed-runtime-and-takeover.md": "419e2817042c5cad8a80d0c559bc01fd07189c835a10c032d954ee8e4e12d36f"
+  },
+  "implementation_commits": [
+    "22d318090d517917c2f46fede7e71a0bc783c5cf",
+    "e4088667576280e9cdcba5009a69397250f238cd"
+  ],
+  "entry_hash": "fa6d8a56198b564050da0c37978010ea30b2882306f89f90b9c3ebb53a21460b"
+}

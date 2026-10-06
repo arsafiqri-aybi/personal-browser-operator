@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-architecture_version: "0.1.0"
+architecture_version: "0.2.0"
 status: LOCKED
 control_loop:
   - STATE
@@ -8,8 +8,10 @@ control_loop:
   - PLAN_NEXT_SUBGOAL
   - POLICY_CHECK
   - EXECUTE
+  - RECORD_EFFECT
   - OBSERVE_EFFECT
   - VERIFY
+  - RECONCILE_EFFECT
   - UPDATE_STATE
   - STOP_CONTINUE_RECOVER_OR_REPLAN
 state_domains:
@@ -19,10 +21,18 @@ state_domains:
     owner: PBO-08
   identity_state:
     owner: PBO-05
+  effect_state:
+    owner: PBO-10
   knowledge_state:
     owner: PBO-20
   audit_state:
     owner: PBO-15
+runtime_host:
+  browser_mode: persistent_headed_chromium
+  execution_kernel: playwright
+  human_takeover: same_browser_session
+  public_ingress: authenticated_tls_proxy_or_tunnel
+  default_port_exposure: loopback_only
 release_truth_states:
   - DESIGNED
   - IMPLEMENTED

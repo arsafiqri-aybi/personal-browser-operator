@@ -12,11 +12,19 @@ interfaces:
     producer: PBO-09
     consumer: PBO-10
     contract: contracts/action.schema.json
+  - id: IF-EFFECT
+    producer: PBO-10
+    consumer: [PBO-11, PBO-12, PBO-15]
+    contract: contracts/effect.schema.json
   - id: IF-VERIFY
     producer: PBO-11
-    consumer: [PBO-08, PBO-12, PBO-15]
+    consumer: [PBO-08, PBO-10, PBO-12, PBO-15]
     contract: contracts/verification.schema.json
   - id: IF-CHECKPOINT
     producer: PBO-18
     consumer: [PBO-08, PBO-12]
     contract: contracts/checkpoint.schema.json
+  - id: IF-HUMAN-TAKEOVER
+    producer: PBO-16
+    consumer: [PBO-08, PBO-10, PBO-17]
+    contract: task_status_waiting_for_user_plus_fresh_observation_on_resume
