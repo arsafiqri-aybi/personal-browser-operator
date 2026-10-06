@@ -1,6 +1,6 @@
 {
   "name": "@pbo/operator-runtime",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "tsx --test test/unit/*.test.ts",
     "test:contract": "tsx --test test/contract/*.test.ts",
-    "test:browser": "tsx --test test/browser/*.test.ts"
+    "test:browser": "tsx --test test/browser/*.test.ts",
+    "test:remote-container": "tsx test/deployment/remote-mcp-smoke.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "2.1.1",

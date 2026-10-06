@@ -1,6 +1,6 @@
 {
   "name": "personal-browser-operator",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "workspaces": ["packages/*"],
@@ -9,7 +9,8 @@
     "typecheck": "npm -w @pbo/operator-runtime run typecheck",
     "test:unit": "npm -w @pbo/operator-runtime run test:unit",
     "test:contract": "npm -w @pbo/operator-runtime run test:contract",
-    "test:browser": "npm -w @pbo/operator-runtime run test:browser",
+    "test:container": "bash scripts/container-smoke.sh",
+    "test:browser": "npm -w @pbo/operator-runtime run test:browser && npm run test:container",
     "start": "npm -w @pbo/operator-runtime run start",
     "start:http": "npm -w @pbo/operator-runtime run start:http",
     "test": "npm run validate:architecture && npm run typecheck && npm run test:unit && npm run test:contract"
